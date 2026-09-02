@@ -371,6 +371,13 @@
         padding-top: 6px;
         border-top: 1px solid rgba(255, 255, 255, .12);
       }
+      #${CONTROL_ID}[data-position^="bottom"] .auto-start-row {
+        order: -1;
+        padding-top: 0;
+        padding-bottom: 6px;
+        border-top: 0;
+        border-bottom: 1px solid rgba(255, 255, 255, .12);
+      }
       #${CONTROL_ID} .auto-start-toggle {
         width: 32px;
         height: 32px;
