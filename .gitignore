@@ -1,7 +1,18 @@
+# macOS
 .DS_Store
+
+# Local environment files
 .env
 .env.*
+!.env.example
+!**/.env.example
+
+# Generated release artifacts
 build/
+
+# Xcode
 DerivedData/
 *.xcodeproj/xcuserdata/
+
+# Local Userscripts shortcut
 /icloud-userscripts
