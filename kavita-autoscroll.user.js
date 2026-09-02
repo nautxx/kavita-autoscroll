@@ -148,14 +148,18 @@
         display: flex;
         align-items: center;
         gap: 8px;
-        padding: 8px 10px;
-        border: 1px solid rgba(255,255,255,.24);
+        padding: 7px 11px 7px 7px;
+        border: 1px solid rgba(255, 255, 255, .18);
         border-radius: 999px;
         color: #fff;
-        background: rgba(18,18,18,.88);
-        box-shadow: 0 4px 18px rgba(0,0,0,.35);
-        font: 13px/1.2 system-ui, sans-serif;
-        backdrop-filter: blur(8px);
+        background: rgba(38, 38, 40, .58);
+        box-shadow:
+          0 8px 24px rgba(0, 0, 0, .24),
+          inset 0 1px 0 rgba(255, 255, 255, .16);
+        font: 600 13px/1.2 -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+        letter-spacing: -.01em;
+        backdrop-filter: blur(30px) saturate(160%);
+        -webkit-backdrop-filter: blur(30px) saturate(160%);
         user-select: none;
         -webkit-user-select: none;
       }
@@ -170,12 +174,15 @@
         border: 0;
         border-radius: 999px;
         color: #fff;
-        background: #6f42c1;
+        background: rgba(255, 255, 255, .13);
         cursor: pointer;
+        transition: background-color 150ms ease, transform 150ms ease;
       }
-      #${CONTROL_ID}[data-running="true"] button { background: #b02a37; }
+      #${CONTROL_ID}[data-running="true"] button { background: rgba(255, 255, 255, .22); }
+      #${CONTROL_ID} button:hover { background: rgba(255, 255, 255, .2); }
+      #${CONTROL_ID} button:active { transform: scale(.94); }
       #${CONTROL_ID} button:focus-visible {
-        outline: 2px solid #fff;
+        outline: 3px solid rgba(10, 132, 255, .9);
         outline-offset: 2px;
       }
       #${CONTROL_ID} button svg {
@@ -183,8 +190,28 @@
         height: 16px;
         fill: currentColor;
       }
-      #${CONTROL_ID} input { width: min(30vw, 150px); }
-      #${CONTROL_ID} output { min-width: 58px; font-variant-numeric: tabular-nums; }
+      #${CONTROL_ID} input {
+        width: min(30vw, 150px);
+        height: 26px;
+        margin: 0;
+        padding: 0;
+        accent-color: #0a84ff;
+        cursor: pointer;
+      }
+      #${CONTROL_ID} output {
+        min-width: 58px;
+        font-variant-numeric: tabular-nums;
+      }
+      @media (prefers-reduced-transparency: reduce) {
+        #${CONTROL_ID} {
+          background: rgba(32, 32, 34, .94);
+          backdrop-filter: none;
+          -webkit-backdrop-filter: none;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #${CONTROL_ID} button { transition: none; }
+      }
     `;
     document.head.append(style);
 
