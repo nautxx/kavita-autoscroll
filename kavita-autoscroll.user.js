@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kavita Webtoon Auto-scroll
 // @namespace    https://github.com/nautxx/kavita-autoscroll
-// @version      0.2.0
+// @version      0.3.0
 // @description  Adjustable, pausable auto-scrolling for Kavita's Webtoon reader.
 // @author       nautxx
 // @license      MIT
@@ -18,12 +18,13 @@
 (() => {
   'use strict';
 
-  const VERSION = '0.2.0';
+  const VERSION = '0.3.0';
   const INSTALL_MARKER = 'data-kavita-autoscroll';
   const STORAGE_KEY = 'kavita-autoscroll.speed';
   const DEFAULT_SPEED = 55;
   const MIN_SPEED = 10;
   const MAX_SPEED = 300;
+  const AUTO_HIDE_DELAY = 2500;
   const READER_ROUTE = /\/manga(?:\/|$)/i;
   const CONTROL_ID = 'kavita-autoscroll';
   const ICONS = {
@@ -37,6 +38,8 @@
   let running = false;
   let speed = clamp(Number(localStorage.getItem(STORAGE_KEY)) || DEFAULT_SPEED);
   let animationFrame = 0;
+  let autoHideTimer = 0;
+  let mouseOverControls = false;
   let previousTime = 0;
   let fractionalDistance = 0;
   let lastAutomaticScroll = 0;
@@ -113,6 +116,34 @@
     animationFrame = requestAnimationFrame(tick);
   }
 
+  function cancelAutoHide() {
+    clearTimeout(autoHideTimer);
+    autoHideTimer = 0;
+  }
+
+  function hideControls() {
+    autoHideTimer = 0;
+    const keyboardFocusWithin = controls.contains(document.activeElement) &&
+      document.activeElement.matches(':focus-visible');
+    if (!running || mouseOverControls || keyboardFocusWithin) {
+      if (running) scheduleAutoHide();
+      return;
+    }
+
+    controls.dataset.autohidden = 'true';
+  }
+
+  function scheduleAutoHide() {
+    cancelAutoHide();
+    if (running) autoHideTimer = window.setTimeout(hideControls, AUTO_HIDE_DELAY);
+  }
+
+  function revealControls() {
+    if (!controls) return;
+    controls.dataset.autohidden = 'false';
+    scheduleAutoHide();
+  }
+
   function setRunning(nextRunning) {
     running = nextRunning && isReaderRoute();
     previousTime = 0;
@@ -125,7 +156,13 @@
     controls.dataset.running = String(running);
 
     cancelAnimationFrame(animationFrame);
-    if (running) animationFrame = requestAnimationFrame(tick);
+    if (running) {
+      animationFrame = requestAnimationFrame(tick);
+      scheduleAutoHide();
+    } else {
+      cancelAutoHide();
+      revealControls();
+    }
   }
 
   function setSpeed(nextSpeed) {
@@ -162,8 +199,15 @@
         -webkit-backdrop-filter: blur(30px) saturate(160%);
         user-select: none;
         -webkit-user-select: none;
+        transition: opacity 200ms ease, transform 200ms ease;
+        will-change: opacity, transform;
       }
       #${CONTROL_ID}[hidden] { display: none; }
+      #${CONTROL_ID}[data-autohidden="true"] {
+        opacity: 0;
+        transform: translateY(8px) scale(.97);
+        pointer-events: none;
+      }
       #${CONTROL_ID} button {
         display: grid;
         place-items: center;
@@ -210,7 +254,7 @@
         }
       }
       @media (prefers-reduced-motion: reduce) {
-        #${CONTROL_ID} button { transition: none; }
+        #${CONTROL_ID}, #${CONTROL_ID} button { transition: none; }
       }
     `;
     document.head.append(style);
@@ -229,7 +273,20 @@
     speedSlider = controls.querySelector('input');
     speedOutput = controls.querySelector('output');
     toggleButton.addEventListener('click', () => setRunning(!running));
-    speedSlider.addEventListener('input', () => setSpeed(speedSlider.value));
+    speedSlider.addEventListener('input', () => {
+      setSpeed(speedSlider.value);
+      revealControls();
+    });
+    controls.addEventListener('pointerenter', (event) => {
+      if (event.pointerType === 'mouse') mouseOverControls = true;
+      revealControls();
+    });
+    controls.addEventListener('pointerleave', (event) => {
+      if (event.pointerType === 'mouse') mouseOverControls = false;
+      scheduleAutoHide();
+    });
+    controls.addEventListener('focusin', revealControls);
+    controls.addEventListener('focusout', scheduleAutoHide);
     setSpeed(speed);
     syncRoute();
   }
@@ -241,10 +298,14 @@
   }
 
   function pauseForManualInput(event) {
+    revealControls();
     if (!running || controls.contains(event.target)) return;
     setRunning(false);
   }
 
+  document.addEventListener('pointermove', (event) => {
+    if (event.pointerType === 'mouse') revealControls();
+  }, { passive: true });
   document.addEventListener('wheel', pauseForManualInput, { passive: true, capture: true });
   document.addEventListener('touchstart', pauseForManualInput, { passive: true, capture: true });
   document.addEventListener('pointerdown', pauseForManualInput, { passive: true, capture: true });
@@ -253,6 +314,7 @@
   }, { passive: true, capture: true });
   document.addEventListener('keydown', (event) => {
     if (isEditableTarget(event.target)) return;
+    revealControls();
     if (event.key.toLowerCase() === 's' && !event.ctrlKey && !event.metaKey && !event.altKey) {
       event.preventDefault();
       setRunning(!running);

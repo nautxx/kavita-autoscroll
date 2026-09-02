@@ -11,6 +11,7 @@ temporary Safari Web Extension on macOS.
 
 - Adjustable scrolling from 10 to 300 pixels per second
 - Play/pause control suitable for mouse or touch
+- Automatically hides the controls while scrolling and reveals them on input
 - Pauses when you scroll, click, or touch outside the control
 - Remembers the selected speed in the browser
 - Handles Kavita's normal and fullscreen Webtoon readers
@@ -58,11 +59,14 @@ Safari removes temporary extensions after 24 hours or when Safari quits.
 
 ## Usage
 
-- Select **Play** to begin and **Pause** to stop.
+- Select the play icon to begin and the pause icon to stop.
 - Move the slider to change speed.
 - Press `S` to toggle scrolling on a hardware keyboard.
 - Press `[` or `]` to decrease or increase speed.
 - Scrolling, clicking, or touching outside the control pauses auto-scroll.
+- While auto-scroll is running, the controls fade away after 2.5 seconds of
+  inactivity. Move the pointer, touch the page, or use the keyboard to reveal
+  them. The controls remain visible while paused.
 
 Kavita must be using its **Webtoon** reader mode. The control is injected only
 on URLs containing a `/manga/` path segment, which is how Kavita routes its
