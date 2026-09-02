@@ -12,6 +12,7 @@ temporary Safari Web Extension on macOS.
 - Adjustable scrolling from 10 to 300 pixels per second
 - Play/pause control suitable for mouse or touch
 - Automatically hides the controls while scrolling and reveals them on input
+- Can be placed in any screen corner and remembers the selection
 - Pauses when you scroll, click, or touch outside the control
 - Remembers the selected speed in the browser
 - Handles Kavita's normal and fullscreen Webtoon readers
@@ -61,6 +62,8 @@ Safari removes temporary extensions after 24 hours or when Safari quits.
 
 - Select the play icon to begin and the pause icon to stop.
 - Move the slider to change speed.
+- Select the four-corner icon to move the controls to the top-left, top-right,
+  bottom-left, or bottom-right corner.
 - Press `S` to toggle scrolling on a hardware keyboard.
 - Press `[` or `]` to decrease or increase speed.
 - Scrolling, clicking, or touching outside the control pauses auto-scroll.
@@ -80,8 +83,8 @@ HTTP(S) pages whose path contains `/manga/`. It does nothing beyond those
 matched pages.
 
 The script does not read credentials, call Kavita APIs, send data, or load
-remote code. Its only stored value is the selected scrolling speed in that
-site's local browser storage. Review the complete source in
+remote code. Its only stored values are the scrolling speed and preferred
+control corner in that site's local browser storage. Review the complete source in
 [`kavita-autoscroll.user.js`](./kavita-autoscroll.user.js).
 
 ## Browser support

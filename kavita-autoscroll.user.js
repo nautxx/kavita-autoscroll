@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kavita Webtoon Auto-scroll
 // @namespace    https://github.com/nautxx/kavita-autoscroll
-// @version      0.3.0
+// @version      0.4.0
 // @description  Adjustable, pausable auto-scrolling for Kavita's Webtoon reader.
 // @author       nautxx
 // @license      MIT
@@ -18,18 +18,21 @@
 (() => {
   'use strict';
 
-  const VERSION = '0.3.0';
+  const VERSION = '0.4.0';
   const INSTALL_MARKER = 'data-kavita-autoscroll';
   const STORAGE_KEY = 'kavita-autoscroll.speed';
+  const POSITION_STORAGE_KEY = 'kavita-autoscroll.position';
   const DEFAULT_SPEED = 55;
   const MIN_SPEED = 10;
   const MAX_SPEED = 300;
   const AUTO_HIDE_DELAY = 2500;
   const READER_ROUTE = /\/manga(?:\/|$)/i;
   const CONTROL_ID = 'kavita-autoscroll';
+  const POSITIONS = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
   const ICONS = {
     play: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>',
     pause: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>',
+    position: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v2H6v4H4zm10 0h6v6h-2V6h-4zM4 14h2v4h4v2H4zm14 0h2v6h-6v-2h4z"/></svg>',
   };
 
   if (document.documentElement.hasAttribute(INSTALL_MARKER)) return;
@@ -37,6 +40,7 @@
 
   let running = false;
   let speed = clamp(Number(localStorage.getItem(STORAGE_KEY)) || DEFAULT_SPEED);
+  let position = normalizePosition(localStorage.getItem(POSITION_STORAGE_KEY));
   let animationFrame = 0;
   let autoHideTimer = 0;
   let mouseOverControls = false;
@@ -47,9 +51,16 @@
   let toggleButton;
   let speedOutput;
   let speedSlider;
+  let positionButton;
+  let positionMenu;
+  let positionOptions;
 
   function clamp(value) {
     return Math.min(MAX_SPEED, Math.max(MIN_SPEED, value));
+  }
+
+  function normalizePosition(value) {
+    return POSITIONS.includes(value) ? value : 'bottom-right';
   }
 
   function isReaderRoute() {
@@ -125,7 +136,7 @@
     autoHideTimer = 0;
     const keyboardFocusWithin = controls.contains(document.activeElement) &&
       document.activeElement.matches(':focus-visible');
-    if (!running || mouseOverControls || keyboardFocusWithin) {
+    if (!running || mouseOverControls || keyboardFocusWithin || !positionMenu.hidden) {
       if (running) scheduleAutoHide();
       return;
     }
@@ -142,6 +153,28 @@
     if (!controls) return;
     controls.dataset.autohidden = 'false';
     scheduleAutoHide();
+  }
+
+  function setPosition(nextPosition) {
+    position = normalizePosition(nextPosition);
+    controls.dataset.position = position;
+    localStorage.setItem(POSITION_STORAGE_KEY, position);
+    positionOptions.forEach((option) => {
+      option.setAttribute('aria-checked', String(option.dataset.value === position));
+    });
+  }
+
+  function setPositionMenu(open, restoreFocus = true) {
+    positionMenu.hidden = !open;
+    positionButton.setAttribute('aria-expanded', String(open));
+    if (open) {
+      cancelAutoHide();
+      const selectedOption = positionMenu.querySelector('[aria-checked="true"]');
+      selectedOption?.focus({ preventScroll: true });
+    } else {
+      if (restoreFocus) positionButton.focus({ preventScroll: true });
+      scheduleAutoHide();
+    }
   }
 
   function setRunning(nextRunning) {
@@ -208,6 +241,23 @@
         transform: translateY(8px) scale(.97);
         pointer-events: none;
       }
+      #${CONTROL_ID}[data-position="top-left"] {
+        top: max(16px, env(safe-area-inset-top));
+        right: auto;
+        bottom: auto;
+        left: max(16px, env(safe-area-inset-left));
+      }
+      #${CONTROL_ID}[data-position="top-right"] {
+        top: max(16px, env(safe-area-inset-top));
+        bottom: auto;
+      }
+      #${CONTROL_ID}[data-position="bottom-left"] {
+        right: auto;
+        left: max(16px, env(safe-area-inset-left));
+      }
+      #${CONTROL_ID}[data-position^="top"][data-autohidden="true"] {
+        transform: translateY(-8px) scale(.97);
+      }
       #${CONTROL_ID} button {
         display: grid;
         place-items: center;
@@ -222,7 +272,7 @@
         cursor: pointer;
         transition: background-color 150ms ease, transform 150ms ease;
       }
-      #${CONTROL_ID}[data-running="true"] button { background: rgba(255, 255, 255, .22); }
+      #${CONTROL_ID}[data-running="true"] > .toggle-button { background: rgba(255, 255, 255, .22); }
       #${CONTROL_ID} button:hover { background: rgba(255, 255, 255, .2); }
       #${CONTROL_ID} button:active { transform: scale(.94); }
       #${CONTROL_ID} button:focus-visible {
@@ -246,6 +296,53 @@
         min-width: 58px;
         font-variant-numeric: tabular-nums;
       }
+      #${CONTROL_ID} .position-menu {
+        position: absolute;
+        display: grid;
+        grid-template-columns: repeat(2, 32px);
+        gap: 5px;
+        padding: 6px;
+        border: 1px solid rgba(255, 255, 255, .18);
+        border-radius: 14px;
+        background: rgba(38, 38, 40, .72);
+        box-shadow:
+          0 8px 24px rgba(0, 0, 0, .24),
+          inset 0 1px 0 rgba(255, 255, 255, .16);
+        backdrop-filter: blur(30px) saturate(160%);
+        -webkit-backdrop-filter: blur(30px) saturate(160%);
+      }
+      #${CONTROL_ID} .position-menu[hidden] { display: none; }
+      #${CONTROL_ID}[data-position^="bottom"] .position-menu { bottom: calc(100% + 8px); }
+      #${CONTROL_ID}[data-position^="top"] .position-menu { top: calc(100% + 8px); }
+      #${CONTROL_ID}[data-position$="left"] .position-menu { left: 0; }
+      #${CONTROL_ID}[data-position$="right"] .position-menu { right: 0; }
+      #${CONTROL_ID} .position-option {
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+      }
+      #${CONTROL_ID} .position-option[aria-checked="true"] {
+        background: rgba(10, 132, 255, .72);
+      }
+      #${CONTROL_ID} .corner-preview {
+        position: relative;
+        width: 16px;
+        height: 16px;
+        border: 1.5px solid currentColor;
+        border-radius: 4px;
+      }
+      #${CONTROL_ID} .corner-preview::after {
+        content: '';
+        position: absolute;
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+      #${CONTROL_ID} [data-value="top-left"] .corner-preview::after { top: 2px; left: 2px; }
+      #${CONTROL_ID} [data-value="top-right"] .corner-preview::after { top: 2px; right: 2px; }
+      #${CONTROL_ID} [data-value="bottom-left"] .corner-preview::after { bottom: 2px; left: 2px; }
+      #${CONTROL_ID} [data-value="bottom-right"] .corner-preview::after { right: 2px; bottom: 2px; }
       @media (prefers-reduced-transparency: reduce) {
         #${CONTROL_ID} {
           background: rgba(32, 32, 34, .94);
@@ -263,15 +360,26 @@
     controls.id = CONTROL_ID;
     controls.setAttribute('aria-label', 'Webtoon auto-scroll controls');
     controls.innerHTML = `
-      <button type="button" aria-pressed="false" aria-label="Start auto-scroll" title="Start auto-scroll (S)">${ICONS.play}</button>
+      <button class="toggle-button" type="button" aria-pressed="false" aria-label="Start auto-scroll" title="Start auto-scroll (S)">${ICONS.play}</button>
       <input type="range" min="${MIN_SPEED}" max="${MAX_SPEED}" step="5" aria-label="Scroll speed">
       <output></output>
+      <button class="position-button" type="button" aria-expanded="false" aria-haspopup="menu" aria-label="Change control position" title="Change control position">${ICONS.position}</button>
+      <div class="position-menu" role="menu" aria-label="Control position" hidden>
+        ${POSITIONS.map((value) => `
+          <button class="position-option" type="button" role="menuitemradio" data-value="${value}" aria-checked="false" aria-label="${value.replace('-', ' ')}">
+            <span class="corner-preview" aria-hidden="true"></span>
+          </button>
+        `).join('')}
+      </div>
     `;
     document.body.append(controls);
 
     toggleButton = controls.querySelector('button');
     speedSlider = controls.querySelector('input');
     speedOutput = controls.querySelector('output');
+    positionButton = controls.querySelector('.position-button');
+    positionMenu = controls.querySelector('.position-menu');
+    positionOptions = controls.querySelectorAll('.position-option');
     toggleButton.addEventListener('click', () => setRunning(!running));
     speedSlider.addEventListener('input', () => {
       setSpeed(speedSlider.value);
@@ -287,7 +395,15 @@
     });
     controls.addEventListener('focusin', revealControls);
     controls.addEventListener('focusout', scheduleAutoHide);
+    positionButton.addEventListener('click', () => setPositionMenu(positionMenu.hidden));
+    positionOptions.forEach((option) => {
+      option.addEventListener('click', () => {
+        setPosition(option.dataset.value);
+        setPositionMenu(false);
+      });
+    });
     setSpeed(speed);
+    setPosition(position);
     syncRoute();
   }
 
@@ -299,7 +415,9 @@
 
   function pauseForManualInput(event) {
     revealControls();
-    if (!running || controls.contains(event.target)) return;
+    const outsideControls = !controls.contains(event.target);
+    if (outsideControls && !positionMenu.hidden) setPositionMenu(false, false);
+    if (!running || !outsideControls) return;
     setRunning(false);
   }
 
@@ -315,6 +433,19 @@
   document.addEventListener('keydown', (event) => {
     if (isEditableTarget(event.target)) return;
     revealControls();
+    if (event.key === 'Escape' && !positionMenu.hidden) {
+      event.preventDefault();
+      setPositionMenu(false);
+      return;
+    }
+    if (!positionMenu.hidden && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+      event.preventDefault();
+      const options = Array.from(positionOptions);
+      const currentIndex = Math.max(0, options.indexOf(document.activeElement));
+      const offset = ['ArrowRight', 'ArrowDown'].includes(event.key) ? 1 : -1;
+      options[(currentIndex + offset + options.length) % options.length].focus({ preventScroll: true });
+      return;
+    }
     if (event.key.toLowerCase() === 's' && !event.ctrlKey && !event.metaKey && !event.altKey) {
       event.preventDefault();
       setRunning(!running);
