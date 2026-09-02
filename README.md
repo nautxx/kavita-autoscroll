@@ -7,11 +7,15 @@ The script adds a compact play/pause and speed control to Kavita manga-reader
 pages. It works as a userscript in modern browsers and can also be loaded as a
 temporary Safari Web Extension on macOS.
 
+For extension-free clients—including an iPad Home Screen web app—the included
+Docker injector can place the same script into Kavita's HTML at the server.
+
 ## Features
 
 - Adjustable scrolling from 10 to 300 pixels per second
 - Play/pause control suitable for mouse or touch
 - Automatically hides the controls while scrolling and reveals them on input
+- Can automatically start when Kavita enters Webtoon mode
 - Can be placed in any screen corner and remembers the selection
 - Pauses when you scroll, click, or touch outside the control
 - Remembers the selected speed in the browser
@@ -58,12 +62,35 @@ Safari removes temporary extensions after 24 hours or when Safari quits.
 3. Confirm installation, open a Kavita Webtoon, and reload the reader if it was
    already open.
 
+### Docker injector
+
+The injector sits between your public reverse proxy and Kavita. It serves the
+script from the same origin and adds its script tag to Kavita's HTML, so no
+browser extension is required.
+
+Build it locally from the repository root:
+
+```bash
+docker build \
+  --file injector/Dockerfile \
+  --build-arg AUTOSCROLL_VERSION=0.5.0 \
+  --tag ghcr.io/nautxx/kavita-autoscroll-injector:0.5.0 \
+  .
+```
+
+See [`examples/docker-compose.yml`](./examples/docker-compose.yml) for a full
+example. Point Caddy or your other public reverse proxy at the injector's port,
+not directly at Kavita. `KAVITA_UPSTREAM` may be changed when your Kavita
+service uses another Compose hostname or port. The example includes a local
+build definition; remove its `build` block if you only want to pull the
+published GHCR image.
+
 ## Usage
 
 - Select the play icon to begin and the pause icon to stop.
 - Move the slider to change speed.
-- Select the four-corner icon to move the controls to the top-left, top-right,
-  bottom-left, or bottom-right corner.
+- Select the four-corner icon to open settings. From there, move the controls
+  to any corner or enable **Auto-start in Webtoon mode**.
 - Press `S` to toggle scrolling on a hardware keyboard.
 - Press `[` or `]` to decrease or increase speed.
 - Scrolling, clicking, or touching outside the control pauses auto-scroll.
@@ -71,10 +98,10 @@ Safari removes temporary extensions after 24 hours or when Safari quits.
   inactivity. Move the pointer, touch the page, or use the keyboard to reveal
   them. The controls remain visible while paused.
 
-Kavita must be using its **Webtoon** reader mode. The control is injected only
-on URLs containing a `/manga/` path segment, which is how Kavita routes its
-image reader. If you install the script while a reader is already open, reload
-that page once.
+Kavita must be using its **Webtoon** reader mode. The controls appear only when
+Kavita's infinite scroller is active, including when a reading profile or
+Automatic Webtoon Reader Mode selects it. If you install the script while a
+reader is already open, reload that page once.
 
 ## Permissions and privacy
 
@@ -83,8 +110,8 @@ HTTP(S) pages whose path contains `/manga/`. It does nothing beyond those
 matched pages.
 
 The script does not read credentials, call Kavita APIs, send data, or load
-remote code. Its only stored values are the scrolling speed and preferred
-control corner in that site's local browser storage. Review the complete source in
+remote code. Its only stored values are the scrolling speed, preferred control
+corner, and auto-start preference in that site's local browser storage. Review the complete source in
 [`kavita-autoscroll.user.js`](./kavita-autoscroll.user.js).
 
 ## Browser support
@@ -99,6 +126,23 @@ Userscripts, but device and Kavita-version differences may require testing.
 Bug reports and pull requests are welcome. When reporting a problem, include
 your browser, operating system, Kavita version, whether fullscreen was enabled,
 and the reader URL with private hostnames or identifiers removed.
+
+## Packaging a release
+
+Run:
+
+```bash
+./scripts/package.sh 0.5.0
+```
+
+This creates a userscript, a WebExtension ZIP, and `SHA256SUMS.txt` under the
+versioned `build/release/v0.5.0/` directory. The injector image uses the
+userscript at the repository root as its source, so the browser and server
+packages stay on the same version.
+
+Pushing a matching tag such as `v0.5.0` runs the release workflow. It publishes
+the assets as a GitHub release and builds `linux/amd64` and `linux/arm64`
+injector images in GitHub Container Registry.
 
 ## License
 

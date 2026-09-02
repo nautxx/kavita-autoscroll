@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kavita Webtoon Auto-scroll
 // @namespace    https://github.com/nautxx/kavita-autoscroll
-// @version      0.4.0
+// @version      0.5.0
 // @description  Adjustable, pausable auto-scrolling for Kavita's Webtoon reader.
 // @author       nautxx
 // @license      MIT
@@ -18,10 +18,11 @@
 (() => {
   'use strict';
 
-  const VERSION = '0.4.0';
+  const VERSION = '0.5.0';
   const INSTALL_MARKER = 'data-kavita-autoscroll';
   const STORAGE_KEY = 'kavita-autoscroll.speed';
   const POSITION_STORAGE_KEY = 'kavita-autoscroll.position';
+  const AUTO_START_STORAGE_KEY = 'kavita-autoscroll.auto-start';
   const DEFAULT_SPEED = 55;
   const MIN_SPEED = 10;
   const MAX_SPEED = 300;
@@ -41,6 +42,8 @@
   let running = false;
   let speed = clamp(Number(localStorage.getItem(STORAGE_KEY)) || DEFAULT_SPEED);
   let position = normalizePosition(localStorage.getItem(POSITION_STORAGE_KEY));
+  let autoStart = localStorage.getItem(AUTO_START_STORAGE_KEY) === 'true';
+  let webtoonModeActive = false;
   let animationFrame = 0;
   let autoHideTimer = 0;
   let mouseOverControls = false;
@@ -54,6 +57,7 @@
   let positionButton;
   let positionMenu;
   let positionOptions;
+  let autoStartToggle;
 
   function clamp(value) {
     return Math.min(MAX_SPEED, Math.max(MIN_SPEED, value));
@@ -65,6 +69,10 @@
 
   function isReaderRoute() {
     return READER_ROUTE.test(location.pathname);
+  }
+
+  function isWebtoonModeActive() {
+    return isReaderRoute() && Boolean(document.querySelector('app-infinite-scroller'));
   }
 
   function isEditableTarget(target) {
@@ -164,6 +172,13 @@
     });
   }
 
+  function setAutoStart(enabled) {
+    autoStart = Boolean(enabled);
+    autoStartToggle.checked = autoStart;
+    localStorage.setItem(AUTO_START_STORAGE_KEY, String(autoStart));
+    if (autoStart && isWebtoonModeActive() && !running) setRunning(true);
+  }
+
   function setPositionMenu(open, restoreFocus = true) {
     positionMenu.hidden = !open;
     positionButton.setAttribute('aria-expanded', String(open));
@@ -178,7 +193,7 @@
   }
 
   function setRunning(nextRunning) {
-    running = nextRunning && isReaderRoute();
+    running = nextRunning && isWebtoonModeActive();
     previousTime = 0;
     fractionalDistance = 0;
     const action = running ? 'Pause' : 'Start';
@@ -284,7 +299,7 @@
         height: 16px;
         fill: currentColor;
       }
-      #${CONTROL_ID} input {
+      #${CONTROL_ID} input[type="range"] {
         width: min(30vw, 150px);
         height: 26px;
         margin: 0;
@@ -298,9 +313,9 @@
       }
       #${CONTROL_ID} .position-menu {
         position: absolute;
-        display: grid;
-        grid-template-columns: repeat(2, 32px);
-        gap: 5px;
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
         padding: 6px;
         border: 1px solid rgba(255, 255, 255, .18);
         border-radius: 14px;
@@ -316,6 +331,11 @@
       #${CONTROL_ID}[data-position^="top"] .position-menu { top: calc(100% + 8px); }
       #${CONTROL_ID}[data-position$="left"] .position-menu { left: 0; }
       #${CONTROL_ID}[data-position$="right"] .position-menu { right: 0; }
+      #${CONTROL_ID} .position-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 32px);
+        gap: 5px;
+      }
       #${CONTROL_ID} .position-option {
         width: 32px;
         height: 32px;
@@ -343,6 +363,22 @@
       #${CONTROL_ID} [data-value="top-right"] .corner-preview::after { top: 2px; right: 2px; }
       #${CONTROL_ID} [data-value="bottom-left"] .corner-preview::after { bottom: 2px; left: 2px; }
       #${CONTROL_ID} [data-value="bottom-right"] .corner-preview::after { right: 2px; bottom: 2px; }
+      #${CONTROL_ID} .auto-start-setting {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 190px;
+        padding: 7px 5px 3px;
+        border-top: 1px solid rgba(255, 255, 255, .12);
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      #${CONTROL_ID} .auto-start-setting input {
+        width: 18px;
+        height: 18px;
+        margin: 0;
+        accent-color: #0a84ff;
+      }
       @media (prefers-reduced-transparency: reduce) {
         #${CONTROL_ID} {
           background: rgba(32, 32, 34, .94);
@@ -359,27 +395,35 @@
     controls = document.createElement('aside');
     controls.id = CONTROL_ID;
     controls.setAttribute('aria-label', 'Webtoon auto-scroll controls');
+    controls.hidden = true;
     controls.innerHTML = `
       <button class="toggle-button" type="button" aria-pressed="false" aria-label="Start auto-scroll" title="Start auto-scroll (S)">${ICONS.play}</button>
       <input type="range" min="${MIN_SPEED}" max="${MAX_SPEED}" step="5" aria-label="Scroll speed">
       <output></output>
-      <button class="position-button" type="button" aria-expanded="false" aria-haspopup="menu" aria-label="Change control position" title="Change control position">${ICONS.position}</button>
-      <div class="position-menu" role="menu" aria-label="Control position" hidden>
-        ${POSITIONS.map((value) => `
-          <button class="position-option" type="button" role="menuitemradio" data-value="${value}" aria-checked="false" aria-label="${value.replace('-', ' ')}">
-            <span class="corner-preview" aria-hidden="true"></span>
-          </button>
-        `).join('')}
+      <button class="position-button" type="button" aria-expanded="false" aria-haspopup="dialog" aria-label="Open auto-scroll settings" title="Auto-scroll settings">${ICONS.position}</button>
+      <div class="position-menu" role="dialog" aria-label="Auto-scroll settings" hidden>
+        <div class="position-grid" role="menu" aria-label="Control position">
+          ${POSITIONS.map((value) => `
+            <button class="position-option" type="button" role="menuitemradio" data-value="${value}" aria-checked="false" aria-label="${value.replace('-', ' ')}">
+              <span class="corner-preview" aria-hidden="true"></span>
+            </button>
+          `).join('')}
+        </div>
+        <label class="auto-start-setting">
+          <input class="auto-start-toggle" type="checkbox">
+          <span>Auto-start in Webtoon mode</span>
+        </label>
       </div>
     `;
     document.body.append(controls);
 
     toggleButton = controls.querySelector('button');
-    speedSlider = controls.querySelector('input');
+    speedSlider = controls.querySelector('input[type="range"]');
     speedOutput = controls.querySelector('output');
     positionButton = controls.querySelector('.position-button');
     positionMenu = controls.querySelector('.position-menu');
     positionOptions = controls.querySelectorAll('.position-option');
+    autoStartToggle = controls.querySelector('.auto-start-toggle');
     toggleButton.addEventListener('click', () => setRunning(!running));
     speedSlider.addEventListener('input', () => {
       setSpeed(speedSlider.value);
@@ -396,6 +440,7 @@
     controls.addEventListener('focusin', revealControls);
     controls.addEventListener('focusout', scheduleAutoHide);
     positionButton.addEventListener('click', () => setPositionMenu(positionMenu.hidden));
+    autoStartToggle.addEventListener('change', () => setAutoStart(autoStartToggle.checked));
     positionOptions.forEach((option) => {
       option.addEventListener('click', () => {
         setPosition(option.dataset.value);
@@ -404,13 +449,21 @@
     });
     setSpeed(speed);
     setPosition(position);
-    syncRoute();
+    setAutoStart(autoStart);
+    syncReaderState();
   }
 
-  function syncRoute() {
-    const readerActive = isReaderRoute();
-    controls.hidden = !readerActive;
-    if (!readerActive && running) setRunning(false);
+  function syncReaderState() {
+    const nextWebtoonModeActive = isWebtoonModeActive();
+    if (controls.hidden === nextWebtoonModeActive) controls.hidden = !nextWebtoonModeActive;
+
+    if (!nextWebtoonModeActive) {
+      if (running) setRunning(false);
+    } else if (!webtoonModeActive && autoStart && !running) {
+      setRunning(true);
+    }
+
+    webtoonModeActive = nextWebtoonModeActive;
   }
 
   function pauseForManualInput(event) {
@@ -431,14 +484,15 @@
     if (running && performance.now() - lastAutomaticScroll > 150) pauseForManualInput(event);
   }, { passive: true, capture: true });
   document.addEventListener('keydown', (event) => {
-    if (isEditableTarget(event.target)) return;
-    revealControls();
     if (event.key === 'Escape' && !positionMenu.hidden) {
       event.preventDefault();
       setPositionMenu(false);
       return;
     }
-    if (!positionMenu.hidden && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+    if (isEditableTarget(event.target)) return;
+    revealControls();
+    if (!positionMenu.hidden && document.activeElement?.classList.contains('position-option') &&
+        ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
       event.preventDefault();
       const options = Array.from(positionOptions);
       const currentIndex = Math.max(0, options.indexOf(document.activeElement));
@@ -460,13 +514,14 @@
   const originalReplaceState = history.replaceState;
   history.pushState = function (...args) {
     originalPushState.apply(this, args);
-    queueMicrotask(syncRoute);
+    queueMicrotask(syncReaderState);
   };
   history.replaceState = function (...args) {
     originalReplaceState.apply(this, args);
-    queueMicrotask(syncRoute);
+    queueMicrotask(syncReaderState);
   };
-  addEventListener('popstate', syncRoute);
+  addEventListener('popstate', syncReaderState);
 
   installControls();
+  new MutationObserver(syncReaderState).observe(document.body, { childList: true, subtree: true });
 })();

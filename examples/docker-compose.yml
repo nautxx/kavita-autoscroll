@@ -1,0 +1,34 @@
+services:
+  kavita:
+    image: ghcr.io/kareadita/kavita:latest
+    expose:
+      - "5000"
+    volumes:
+      - ${KAVITA_CONFIG_PATH}:/kavita/config
+      - ${KAVITA_LIBRARY_PATH}:/library
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      TZ: ${TZ}
+    healthcheck:
+      test: curl -f http://localhost:5000 || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  autoscroll-injector:
+    image: ghcr.io/nautxx/kavita-autoscroll-injector:${AUTOSCROLL_VERSION:-0.5.0}
+    build:
+      context: ..
+      dockerfile: injector/Dockerfile
+      args:
+        AUTOSCROLL_VERSION: ${AUTOSCROLL_VERSION:-0.5.0}
+    environment:
+      KAVITA_UPSTREAM: http://kavita:5000
+    depends_on:
+      kavita:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${KAVITA_PORT:-5005}:80"
+    restart: unless-stopped
