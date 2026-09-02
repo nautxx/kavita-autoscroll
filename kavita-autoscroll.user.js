@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kavita Webtoon Auto-scroll
 // @namespace    https://github.com/nautxx/kavita-autoscroll
-// @version      0.5.0
+// @version      0.5.1
 // @description  Adjustable, pausable auto-scrolling for Kavita's Webtoon reader.
 // @author       nautxx
 // @license      MIT
@@ -18,7 +18,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '0.5.0';
+  const VERSION = '0.5.1';
   const INSTALL_MARKER = 'data-kavita-autoscroll';
   const STORAGE_KEY = 'kavita-autoscroll.speed';
   const POSITION_STORAGE_KEY = 'kavita-autoscroll.position';
@@ -34,6 +34,7 @@
     play: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>',
     pause: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>',
     position: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v2H6v4H4zm10 0h6v6h-2V6h-4zM4 14h2v4h4v2H4zm14 0h2v6h-6v-2h4z"/></svg>',
+    autoStart: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 0 0-8.1 5H1l3.6 3.6L8.2 8H6.1A7 7 0 1 1 5 15.7l-1.7 1A9 9 0 1 0 12 3z"/><path d="M10 8v8l6-4z"/></svg>',
   };
 
   if (document.documentElement.hasAttribute(INSTALL_MARKER)) return;
@@ -174,7 +175,8 @@
 
   function setAutoStart(enabled) {
     autoStart = Boolean(enabled);
-    autoStartToggle.checked = autoStart;
+    autoStartToggle.setAttribute('aria-pressed', String(autoStart));
+    autoStartToggle.title = `${autoStart ? 'Disable' : 'Enable'} auto-start in Webtoon mode`;
     localStorage.setItem(AUTO_START_STORAGE_KEY, String(autoStart));
     if (autoStart && isWebtoonModeActive() && !running) setRunning(true);
   }
@@ -363,21 +365,19 @@
       #${CONTROL_ID} [data-value="top-right"] .corner-preview::after { top: 2px; right: 2px; }
       #${CONTROL_ID} [data-value="bottom-left"] .corner-preview::after { bottom: 2px; left: 2px; }
       #${CONTROL_ID} [data-value="bottom-right"] .corner-preview::after { right: 2px; bottom: 2px; }
-      #${CONTROL_ID} .auto-start-setting {
+      #${CONTROL_ID} .auto-start-row {
         display: flex;
-        align-items: center;
-        gap: 8px;
-        min-width: 190px;
-        padding: 7px 5px 3px;
+        justify-content: center;
+        padding-top: 6px;
         border-top: 1px solid rgba(255, 255, 255, .12);
-        cursor: pointer;
-        white-space: nowrap;
       }
-      #${CONTROL_ID} .auto-start-setting input {
-        width: 18px;
-        height: 18px;
-        margin: 0;
-        accent-color: #0a84ff;
+      #${CONTROL_ID} .auto-start-toggle {
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+      }
+      #${CONTROL_ID} .auto-start-toggle[aria-pressed="true"] {
+        background: rgba(10, 132, 255, .72);
       }
       @media (prefers-reduced-transparency: reduce) {
         #${CONTROL_ID} {
@@ -409,10 +409,9 @@
             </button>
           `).join('')}
         </div>
-        <label class="auto-start-setting">
-          <input class="auto-start-toggle" type="checkbox">
-          <span>Auto-start in Webtoon mode</span>
-        </label>
+        <div class="auto-start-row">
+          <button class="auto-start-toggle" type="button" aria-pressed="false" aria-label="Auto-start in Webtoon mode" title="Enable auto-start in Webtoon mode">${ICONS.autoStart}</button>
+        </div>
       </div>
     `;
     document.body.append(controls);
@@ -440,7 +439,7 @@
     controls.addEventListener('focusin', revealControls);
     controls.addEventListener('focusout', scheduleAutoHide);
     positionButton.addEventListener('click', () => setPositionMenu(positionMenu.hidden));
-    autoStartToggle.addEventListener('change', () => setAutoStart(autoStartToggle.checked));
+    autoStartToggle.addEventListener('click', () => setAutoStart(!autoStart));
     positionOptions.forEach((option) => {
       option.addEventListener('click', () => {
         setPosition(option.dataset.value);

@@ -18,12 +18,12 @@ services:
     restart: unless-stopped
 
   autoscroll-injector:
-    image: ghcr.io/nautxx/kavita-autoscroll-injector:${AUTOSCROLL_VERSION:-0.5.0}
+    image: ghcr.io/nautxx/kavita-autoscroll-injector:${AUTOSCROLL_VERSION:-0.5.1}
     build:
       context: ..
       dockerfile: injector/Dockerfile
       args:
-        AUTOSCROLL_VERSION: ${AUTOSCROLL_VERSION:-0.5.0}
+        AUTOSCROLL_VERSION: ${AUTOSCROLL_VERSION:-0.5.1}
     environment:
       KAVITA_UPSTREAM: http://kavita:5000
     depends_on:
