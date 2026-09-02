@@ -26,6 +26,10 @@
   const MAX_SPEED = 300;
   const READER_ROUTE = /\/manga(?:\/|$)/i;
   const CONTROL_ID = 'kavita-autoscroll';
+  const ICONS = {
+    play: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>',
+    pause: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>',
+  };
 
   if (document.documentElement.hasAttribute(INSTALL_MARKER)) return;
   document.documentElement.setAttribute(INSTALL_MARKER, VERSION);
@@ -113,7 +117,10 @@
     running = nextRunning && isReaderRoute();
     previousTime = 0;
     fractionalDistance = 0;
-    toggleButton.textContent = running ? 'Pause' : 'Play';
+    const action = running ? 'Pause' : 'Start';
+    toggleButton.innerHTML = running ? ICONS.pause : ICONS.play;
+    toggleButton.setAttribute('aria-label', `${action} auto-scroll`);
+    toggleButton.title = `${action} auto-scroll (S)`;
     toggleButton.setAttribute('aria-pressed', String(running));
     controls.dataset.running = String(running);
 
@@ -143,7 +150,7 @@
         gap: 8px;
         padding: 8px 10px;
         border: 1px solid rgba(255,255,255,.24);
-        border-radius: 10px;
+        border-radius: 999px;
         color: #fff;
         background: rgba(18,18,18,.88);
         box-shadow: 0 4px 18px rgba(0,0,0,.35);
@@ -154,15 +161,28 @@
       }
       #${CONTROL_ID}[hidden] { display: none; }
       #${CONTROL_ID} button {
-        min-width: 54px;
-        padding: 5px 8px;
+        display: grid;
+        place-items: center;
+        width: 34px;
+        height: 34px;
+        min-width: 34px;
+        padding: 0;
         border: 0;
-        border-radius: 6px;
+        border-radius: 999px;
         color: #fff;
         background: #6f42c1;
         cursor: pointer;
       }
       #${CONTROL_ID}[data-running="true"] button { background: #b02a37; }
+      #${CONTROL_ID} button:focus-visible {
+        outline: 2px solid #fff;
+        outline-offset: 2px;
+      }
+      #${CONTROL_ID} button svg {
+        width: 16px;
+        height: 16px;
+        fill: currentColor;
+      }
       #${CONTROL_ID} input { width: min(30vw, 150px); }
       #${CONTROL_ID} output { min-width: 58px; font-variant-numeric: tabular-nums; }
     `;
@@ -172,7 +192,7 @@
     controls.id = CONTROL_ID;
     controls.setAttribute('aria-label', 'Webtoon auto-scroll controls');
     controls.innerHTML = `
-      <button type="button" aria-pressed="false" title="Toggle auto-scroll (S)">Play</button>
+      <button type="button" aria-pressed="false" aria-label="Start auto-scroll" title="Start auto-scroll (S)">${ICONS.play}</button>
       <input type="range" min="${MIN_SPEED}" max="${MAX_SPEED}" step="5" aria-label="Scroll speed">
       <output></output>
     `;
