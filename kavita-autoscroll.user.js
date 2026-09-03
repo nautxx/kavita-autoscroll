@@ -399,7 +399,7 @@
       #${CONTROL_ID} .position-menu {
         position: absolute;
         display: flex;
-        flex-direction: column;
+        align-items: center;
         gap: 7px;
         padding: 7px;
         border: 1px solid rgba(255, 255, 255, .18);
@@ -450,19 +450,16 @@
       #${CONTROL_ID} [data-value="bottom-right"] .corner-preview::after { right: 2px; bottom: 2px; }
       #${CONTROL_ID} .auto-start-row {
         display: flex;
-        justify-content: center;
-        padding-top: 6px;
-        border-top: 1px solid rgba(255, 255, 255, .12);
+        padding-left: 7px;
+        border-left: 1px solid rgba(255, 255, 255, .12);
       }
-      #${CONTROL_ID}[data-position^="bottom"] .auto-start-row {
+      #${CONTROL_ID}[data-position$="right"] .auto-start-row {
         order: -1;
-        padding-top: 0;
-        padding-bottom: 6px;
-        border-top: 0;
-        border-bottom: 1px solid rgba(255, 255, 255, .12);
+        padding-left: 0;
+        padding-right: 7px;
+        border-left: 0;
+        border-right: 1px solid rgba(255, 255, 255, .12);
       }
-      #${CONTROL_ID}[data-position$="right"] .auto-start-row { justify-content: flex-start; }
-      #${CONTROL_ID}[data-position$="left"] .auto-start-row { justify-content: flex-end; }
       #${CONTROL_ID} .auto-start-toggle {
         width: 32px;
         height: 32px;
