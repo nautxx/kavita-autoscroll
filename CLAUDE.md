@@ -25,3 +25,7 @@ feat: add minimal session panel to CLI output
 ```
 
 Do not append a `Co-Authored-By: Claude ...` trailer to commits in this repo.
+
+## Pull requests
+
+Do not append a "🤖 Generated with [Claude Code]" footer (or similar attribution line) to pull request descriptions in this repo.
