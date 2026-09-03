@@ -83,8 +83,8 @@ Build it locally from the repository root:
 ```bash
 docker build \
   --file injector/Dockerfile \
-  --build-arg AUTOSCROLL_VERSION=0.6.1 \
-  --tag ghcr.io/nautxx/kavita-autoscroll-injector:0.6.1 \
+  --build-arg AUTOSCROLL_VERSION=0.7.0 \
+  --tag ghcr.io/nautxx/kavita-autoscroll-injector:0.7.0 \
   .
 ```
 
@@ -204,15 +204,15 @@ its settings area.
 Run:
 
 ```bash
-./scripts/package.sh 0.6.1
+./scripts/package.sh 0.7.0
 ```
 
 This creates a userscript, a WebExtension ZIP, and `SHA256SUMS.txt` under the
-versioned `build/release/v0.6.1/` directory. The injector image uses the
+versioned `build/release/v0.7.0/` directory. The injector image uses the
 userscript at the repository root as its source, so the browser and server
 packages stay on the same version.
 
-Pushing a matching tag such as `v0.6.1` runs the release workflow. It publishes
+Pushing a matching tag such as `v0.7.0` runs the release workflow. It publishes
 the assets as a GitHub release and builds `linux/amd64` and `linux/arm64`
 injector images in GitHub Container Registry.
 
