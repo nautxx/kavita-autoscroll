@@ -493,11 +493,14 @@
       <button class="position-button" type="button" aria-expanded="false" aria-haspopup="dialog" aria-label="Open auto-scroll settings" title="Auto-scroll settings">${ICONS.position}</button>
       <div class="position-menu" role="dialog" aria-label="Auto-scroll settings" hidden>
         <div class="position-grid" role="menu" aria-label="Control position">
-          ${POSITIONS.map((value) => `
-            <button class="position-option" type="button" role="menuitemradio" data-value="${value}" aria-checked="false" aria-label="${value.replace('-', ' ')}">
-              <span class="corner-preview" aria-hidden="true"></span>
-            </button>
-          `).join('')}
+          ${POSITIONS.map((value) => {
+            const label = value.split('-').map((word) => word[0].toUpperCase() + word.slice(1)).join(' ');
+            return `
+              <button class="position-option" type="button" role="menuitemradio" data-value="${value}" aria-checked="false" aria-label="${label}" title="${label}">
+                <span class="corner-preview" aria-hidden="true"></span>
+              </button>
+            `;
+          }).join('')}
         </div>
         <div class="auto-start-row">
           <button class="auto-start-toggle" type="button" aria-pressed="false" aria-label="Auto-start in Webtoon mode" title="Enable auto-start in Webtoon mode">${ICONS.autoStart}</button>
