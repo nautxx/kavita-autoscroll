@@ -97,6 +97,36 @@ single printable character. Avoid double quotes and HTML-special characters in
 shortcut values. `AUTOSCROLL_SPEED_STEP` must be a positive number and controls
 both the keyboard increment and slider step.
 
+### Keybindings
+
+Put the exact key name in the Compose `.env` file. Common values are:
+
+| Physical key | `.env` value |
+| --- | --- |
+| Enter | `Enter` |
+| Spacebar | `Space` |
+| Up arrow | `ArrowUp` |
+| Down arrow | `ArrowDown` |
+| Left arrow | `ArrowLeft` |
+| Right arrow | `ArrowRight` |
+| Letter S | `s` |
+| Left bracket | `[` |
+| Right bracket | `]` |
+
+For example, this uses Enter to toggle scrolling and the arrow keys to adjust
+the speed by 10 pixels per second:
+
+```dotenv
+AUTOSCROLL_TOGGLE_SHORTCUT=Enter
+AUTOSCROLL_SLOWER_SHORTCUT=ArrowDown
+AUTOSCROLL_FASTER_SHORTCUT=ArrowUp
+AUTOSCROLL_SPEED_STEP=10
+```
+
+Key names are case-insensitive. Each binding must be one key; combinations
+using Control, Command, or Alt are intentionally ignored. Recreate the injector
+container after editing `.env`.
+
 ## Usage
 
 - Select the play icon to begin and the pause icon to stop.
