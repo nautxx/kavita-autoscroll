@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kavita Webtoon Auto-scroll
 // @namespace    https://github.com/nautxx/kavita-autoscroll
-// @version      0.6.0
+// @version      0.6.1
 // @description  Adjustable, pausable auto-scrolling for Kavita's Webtoon reader.
 // @author       nautxx
 // @license      MIT

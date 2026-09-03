@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Kavita Webtoon Auto-scroll",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Adjustable auto-scrolling for the Kavita webtoon reader.",
   "homepage_url": "https://github.com/nautxx/kavita-autoscroll",
   "content_scripts": [
