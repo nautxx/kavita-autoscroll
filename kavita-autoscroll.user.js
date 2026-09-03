@@ -388,6 +388,7 @@
   function setSpeed(nextSpeed) {
     speed = clamp(Number(nextSpeed));
     speedSlider.value = String(speed);
+    speedSlider.style.setProperty('--fill', `${((speed - MIN_SPEED) / (MAX_SPEED - MIN_SPEED)) * 100}%`);
     speedOutput.textContent = `${speed} px/s`;
     localStorage.setItem(STORAGE_KEY, String(speed));
   }
@@ -415,8 +416,8 @@
           inset 0 1px 0 rgba(255, 255, 255, .16);
         font: 600 13px/1.2 -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
         letter-spacing: -.01em;
-        backdrop-filter: blur(30px) saturate(160%);
-        -webkit-backdrop-filter: blur(30px) saturate(160%);
+        backdrop-filter: blur(30px);
+        -webkit-backdrop-filter: blur(30px);
         user-select: none;
         -webkit-user-select: none;
         transition: opacity 200ms ease, transform 200ms ease;
@@ -472,12 +473,50 @@
         fill: currentColor;
       }
       #${CONTROL_ID} input[type="range"] {
+        -webkit-appearance: none;
+        appearance: none;
         width: min(30vw, 150px);
         height: 26px;
         margin: 0;
         padding: 0;
-        accent-color: var(--primary-color, #0a84ff);
+        background: transparent;
         cursor: pointer;
+      }
+      #${CONTROL_ID} input[type="range"]::-webkit-slider-runnable-track {
+        height: 4px;
+        border-radius: 2px;
+        background: linear-gradient(
+          to right,
+          color-mix(in srgb, var(--primary-color, #0a84ff) 72%, transparent) var(--fill, 0%),
+          rgba(255, 255, 255, .25) var(--fill, 0%)
+        );
+      }
+      #${CONTROL_ID} input[type="range"]::-moz-range-track {
+        height: 4px;
+        border-radius: 2px;
+        background: rgba(255, 255, 255, .25);
+      }
+      #${CONTROL_ID} input[type="range"]::-moz-range-progress {
+        height: 4px;
+        border-radius: 2px;
+        background: color-mix(in srgb, var(--primary-color, #0a84ff) 72%, transparent);
+      }
+      #${CONTROL_ID} input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 18px;
+        height: 18px;
+        margin-top: -7px;
+        border-radius: 999px;
+        background: #fff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, .4);
+      }
+      #${CONTROL_ID} input[type="range"]::-moz-range-thumb {
+        width: 18px;
+        height: 18px;
+        border: 0;
+        border-radius: 999px;
+        background: #fff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, .4);
       }
       #${CONTROL_ID} output {
         min-width: 58px;
@@ -496,8 +535,8 @@
         box-shadow:
           0 8px 24px rgba(0, 0, 0, .24),
           inset 0 1px 0 rgba(255, 255, 255, .16);
-        backdrop-filter: blur(30px) saturate(160%);
-        -webkit-backdrop-filter: blur(30px) saturate(160%);
+        backdrop-filter: blur(30px);
+        -webkit-backdrop-filter: blur(30px);
       }
       #${CONTROL_ID} .position-menu[hidden],
       #${CONTROL_ID} .shortcuts-menu[hidden] { display: none; }
