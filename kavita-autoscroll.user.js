@@ -401,10 +401,10 @@
         display: flex;
         flex-direction: column;
         gap: 7px;
-        padding: 6px;
+        padding: 7px;
         border: 1px solid rgba(255, 255, 255, .18);
-        border-radius: 14px;
-        background: rgba(38, 38, 40, .72);
+        border-radius: 20px;
+        background: rgba(38, 38, 40, .58);
         box-shadow:
           0 8px 24px rgba(0, 0, 0, .24),
           inset 0 1px 0 rgba(255, 255, 255, .16);
@@ -470,7 +470,7 @@
         background: rgba(10, 132, 255, .72);
       }
       @media (prefers-reduced-transparency: reduce) {
-        #${CONTROL_ID} {
+        #${CONTROL_ID}, #${CONTROL_ID} .position-menu {
           background: rgba(32, 32, 34, .94);
           backdrop-filter: none;
           -webkit-backdrop-filter: none;
