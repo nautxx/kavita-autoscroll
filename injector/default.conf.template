@@ -12,6 +12,14 @@ server {
     listen 80;
     server_name _;
 
+    # Accept-Encoding is forced empty below so sub_filter can rewrite
+    # Kavita's HTML, which means every proxied response now arrives here
+    # uncompressed. Recompress on the way back out to the client.
+    gzip on;
+    gzip_proxied any;
+    gzip_vary on;
+    gzip_types application/javascript application/json text/css text/plain image/svg+xml;
+
     location = /_kavita-autoscroll/kavita-autoscroll.js {
         alias /usr/share/nginx/html/kavita-autoscroll.js;
         default_type application/javascript;
