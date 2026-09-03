@@ -505,12 +505,17 @@
       #${CONTROL_ID}[data-position^="top"] .position-menu { top: calc(100% + 8px); }
       #${CONTROL_ID}[data-position$="left"] .position-menu { left: 0; }
       #${CONTROL_ID}[data-position$="right"] .position-menu { right: 0; }
-      #${CONTROL_ID} .shortcuts-wrap {
-        position: relative;
-      }
       #${CONTROL_ID} .shortcuts-menu {
-        top: 0;
+        top: 7px;
         left: calc(100% + 8px);
+      }
+      #${CONTROL_ID}[data-position^="bottom"] .shortcuts-menu {
+        top: auto;
+        bottom: 7px;
+      }
+      #${CONTROL_ID}[data-position$="right"] .shortcuts-menu {
+        left: auto;
+        right: calc(100% + 8px);
       }
       #${CONTROL_ID} .position-menu-top {
         display: flex;
@@ -628,19 +633,17 @@
             }).join('')}
           </div>
           <div class="auto-start-row">
-            <div class="shortcuts-wrap">
-              <button class="shortcuts-button" type="button" aria-expanded="false" aria-haspopup="dialog" aria-label="Open keyboard shortcuts" title="Keyboard shortcuts">${ICONS.shortcuts}</button>
-              <div class="shortcuts-menu" role="dialog" aria-label="Keyboard shortcuts" hidden>
-                ${SHORTCUT_ACTIONS.map((action) => `
-                  <div class="shortcut-row">
-                    <span class="shortcut-row-label" id="shortcut-row-label-${action}">${SHORTCUT_LABELS[action]}</span>
-                    <button class="shortcut-key" type="button" data-action="${action}" aria-labelledby="shortcut-row-label-${action}"></button>
-                  </div>
-                `).join('')}
-              </div>
-            </div>
+            <button class="shortcuts-button" type="button" aria-expanded="false" aria-haspopup="dialog" aria-label="Open keyboard shortcuts" title="Keyboard shortcuts">${ICONS.shortcuts}</button>
             <button class="auto-start-toggle" type="button" aria-pressed="false" aria-label="Auto-start in Webtoon mode" title="Enable auto-start in Webtoon mode">${ICONS.autoStart}</button>
           </div>
+        </div>
+        <div class="shortcuts-menu" role="dialog" aria-label="Keyboard shortcuts" hidden>
+          ${SHORTCUT_ACTIONS.map((action) => `
+            <div class="shortcut-row">
+              <span class="shortcut-row-label" id="shortcut-row-label-${action}">${SHORTCUT_LABELS[action]}</span>
+              <button class="shortcut-key" type="button" data-action="${action}" aria-labelledby="shortcut-row-label-${action}"></button>
+            </div>
+          `).join('')}
         </div>
       </div>
     `;
