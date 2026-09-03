@@ -170,6 +170,21 @@ Bug reports and pull requests are welcome. When reporting a problem, include
 your browser, operating system, Kavita version, whether fullscreen was enabled,
 and the reader URL with private hostnames or identifiers removed.
 
+### Local UI preview
+
+Run the dependency-free preview from the repository root:
+
+```bash
+./scripts/preview.sh
+```
+
+Open the URL printed in the terminal. The script starts at port `8080` and
+automatically tries the next port if it is already occupied. The page loads the
+working copy of `kavita-autoscroll.user.js`, mocks Kavita's Webtoon reader and
+animated menus, and reloads automatically after either preview source changes.
+Use the on-page buttons or press `M` to toggle the reader menu and `X` to expand
+its settings area.
+
 ## Packaging a release
 
 Run:
