@@ -26,6 +26,13 @@ Docker injector can place the same script into Kavita's HTML at the server.
 
 ## Install
 
+The userscript/extension methods below run client-side: install on each
+browser or device you read from, and they work against any Kavita server you
+can open in that browser, including ones you don't administer. The
+[Docker injector](#docker-injector) instead runs server-side: set it up once
+in front of your own Kavita instance and every client that visits it gets the
+script automatically, with no per-device install.
+
 ### Safari on iPhone or iPad
 
 1. Install the free
