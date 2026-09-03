@@ -12,7 +12,7 @@ Docker injector can place the same script into Kavita's HTML at the server.
 
 ## Features
 
-- Adjustable scrolling from 10 to 300 pixels per second
+- Adjustable scrolling from 25 to 600 pixels per second
 - Play/pause control suitable for mouse or touch
 - Automatically hides the controls while scrolling and reveals them on input
 - Can automatically start when Kavita enters Webtoon mode
@@ -132,7 +132,7 @@ container after editing `.env`.
 
 - Select the play icon to begin and the pause icon to stop.
 - Move the slider to change speed.
-- Select the four-corner icon to open settings. From there, move the controls
+- Select the settings (gear) icon to open settings. From there, move the controls
   to any corner or enable **Auto-start in Webtoon mode**.
 - Press `S` to toggle scrolling on a hardware keyboard.
 - Press `[` or `]` to decrease or increase speed.
