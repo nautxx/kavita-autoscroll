@@ -89,10 +89,13 @@ Compose environment:
 - `AUTOSCROLL_TOGGLE_SHORTCUT` (default `s`)
 - `AUTOSCROLL_SLOWER_SHORTCUT` (default `[`)
 - `AUTOSCROLL_FASTER_SHORTCUT` (default `]`)
+- `AUTOSCROLL_SPEED_STEP` (default `5` pixels per second)
 
 Set them in the Compose `.env` file and recreate the injector container. Values
 use the browser's `KeyboardEvent.key` names, such as `Space`, `ArrowDown`, or a
-single printable character. Avoid double quotes and HTML-special characters.
+single printable character. Avoid double quotes and HTML-special characters in
+shortcut values. `AUTOSCROLL_SPEED_STEP` must be a positive number and controls
+both the keyboard increment and slider step.
 
 ## Usage
 

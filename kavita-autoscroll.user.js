@@ -18,19 +18,20 @@
 (() => {
   'use strict';
 
-  const VERSION = '0.6.0';
+  const VERSION = '0.6.1';
   const INSTALL_MARKER = 'data-kavita-autoscroll';
   const STORAGE_KEY = 'kavita-autoscroll.speed';
   const POSITION_STORAGE_KEY = 'kavita-autoscroll.position';
   const AUTO_START_STORAGE_KEY = 'kavita-autoscroll.auto-start';
-  const DEFAULT_SPEED = 55;
-  const MIN_SPEED = 10;
-  const MAX_SPEED = 300;
+  const DEFAULT_SPEED = 100;
+  const MIN_SPEED = 25;
+  const MAX_SPEED = 600;
   const AUTO_HIDE_DELAY = 2500;
   const READER_ROUTE = /\/manga(?:\/|$)/i;
   const CONTROL_ID = 'kavita-autoscroll';
   const POSITIONS = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
   const injectedConfig = document.currentScript?.dataset ?? {};
+  const SPEED_STEP = normalizeSpeedStep(injectedConfig.speedStep);
   const SHORTCUTS = Object.freeze({
     toggle: normalizeShortcut(injectedConfig.toggleKey, 's'),
     slower: normalizeShortcut(injectedConfig.slowerKey, '['),
@@ -73,6 +74,11 @@
   function normalizeShortcut(value, fallback) {
     if (typeof value !== 'string' || value.length === 0) return fallback;
     return value.toLocaleLowerCase() === 'space' ? ' ' : value;
+  }
+
+  function normalizeSpeedStep(value) {
+    const parsedValue = Number(value);
+    return Number.isFinite(parsedValue) && parsedValue > 0 ? parsedValue : 5;
   }
 
   function shortcutLabel(key) {
@@ -425,7 +431,7 @@
     controls.hidden = true;
     controls.innerHTML = `
       <button class="toggle-button" type="button" aria-pressed="false" aria-label="Start auto-scroll" title="Start auto-scroll (${shortcutLabel(SHORTCUTS.toggle)})">${ICONS.play}</button>
-      <input type="range" min="${MIN_SPEED}" max="${MAX_SPEED}" step="5" aria-label="Scroll speed">
+      <input type="range" min="${MIN_SPEED}" max="${MAX_SPEED}" step="${SPEED_STEP}" aria-label="Scroll speed">
       <output></output>
       <button class="position-button" type="button" aria-expanded="false" aria-haspopup="dialog" aria-label="Open auto-scroll settings" title="Auto-scroll settings">${ICONS.position}</button>
       <div class="position-menu" role="dialog" aria-label="Auto-scroll settings" hidden>
@@ -531,10 +537,10 @@
       setRunning(!running);
     } else if (isShortcut(event, SHORTCUTS.slower)) {
       event.preventDefault();
-      setSpeed(speed - 5);
+      setSpeed(speed - SPEED_STEP);
     } else if (isShortcut(event, SHORTCUTS.faster)) {
       event.preventDefault();
-      setSpeed(speed + 5);
+      setSpeed(speed + SPEED_STEP);
     }
   });
 
