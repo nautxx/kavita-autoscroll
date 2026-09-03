@@ -17,6 +17,8 @@ Docker injector can place the same script into Kavita's HTML at the server.
 - Automatically hides the controls while scrolling and reveals them on input
 - Can automatically start when Kavita enters Webtoon mode
 - Can be placed in any screen corner and remembers the selection
+- Keyboard shortcuts can be remapped from the settings menu and are
+  remembered per browser
 - Moves out of the way when Kavita's reader menu opens
 - Pauses when you scroll, click, or touch outside the control
 - Remembers the selected speed in the browser
@@ -143,6 +145,10 @@ container after editing `.env`.
   to any corner or enable **Auto-start in Webtoon mode**.
 - Press `S` to toggle scrolling on a hardware keyboard.
 - Press `[` or `]` to decrease or increase speed.
+- In settings, select the keyboard icon to remap shortcuts. Select a key
+  (`S`, `[`, or `]`) and press any key to reassign it, or `Escape` to cancel.
+  Remapped shortcuts are remembered in that browser and take priority over
+  the Docker injector's configured keys.
 - Scrolling, clicking, or touching outside the control pauses auto-scroll.
 - While auto-scroll is running, the controls fade away after 2.5 seconds of
   inactivity. Move the pointer, touch the page, or use the keyboard to reveal
@@ -161,7 +167,8 @@ matched pages.
 
 The script does not read credentials, call Kavita APIs, send data, or load
 remote code. Its only stored values are the scrolling speed, preferred control
-corner, and auto-start preference in that site's local browser storage. Review the complete source in
+corner, auto-start preference, and any remapped keyboard shortcuts, all in
+that site's local browser storage. Review the complete source in
 [`kavita-autoscroll.user.js`](./kavita-autoscroll.user.js).
 
 ## Browser support
