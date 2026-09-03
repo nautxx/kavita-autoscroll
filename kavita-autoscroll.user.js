@@ -376,7 +376,7 @@
       #${CONTROL_ID} button:hover { background: rgba(255, 255, 255, .2); }
       #${CONTROL_ID} button:active { transform: scale(.94); }
       #${CONTROL_ID} button:focus-visible {
-        outline: 3px solid rgba(139, 92, 246, .9);
+        outline: 3px solid color-mix(in srgb, var(--primary-color, #0a84ff) 90%, transparent);
         outline-offset: 2px;
       }
       #${CONTROL_ID} button svg {
@@ -389,7 +389,7 @@
         height: 26px;
         margin: 0;
         padding: 0;
-        accent-color: #8b5cf6;
+        accent-color: var(--primary-color, #0a84ff);
         cursor: pointer;
       }
       #${CONTROL_ID} output {
@@ -427,7 +427,7 @@
         min-width: 32px;
       }
       #${CONTROL_ID} .position-option[aria-checked="true"] {
-        background: rgba(139, 92, 246, .72);
+        background: color-mix(in srgb, var(--primary-color, #0a84ff) 72%, transparent);
       }
       #${CONTROL_ID} .corner-preview {
         position: relative;
@@ -466,7 +466,7 @@
         min-width: 32px;
       }
       #${CONTROL_ID} .auto-start-toggle[aria-pressed="true"] {
-        background: rgba(139, 92, 246, .72);
+        background: color-mix(in srgb, var(--primary-color, #0a84ff) 72%, transparent);
       }
       @media (prefers-reduced-transparency: reduce) {
         #${CONTROL_ID}, #${CONTROL_ID} .position-menu {
