@@ -30,6 +30,12 @@
   const READER_ROUTE = /\/manga(?:\/|$)/i;
   const CONTROL_ID = 'kavita-autoscroll';
   const POSITIONS = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
+  const injectedConfig = document.currentScript?.dataset ?? {};
+  const SHORTCUTS = Object.freeze({
+    toggle: normalizeShortcut(injectedConfig.toggleKey, 's'),
+    slower: normalizeShortcut(injectedConfig.slowerKey, '['),
+    faster: normalizeShortcut(injectedConfig.fasterKey, ']'),
+  });
   const ICONS = {
     play: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>',
     pause: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>',
@@ -62,6 +68,20 @@
 
   function clamp(value) {
     return Math.min(MAX_SPEED, Math.max(MIN_SPEED, value));
+  }
+
+  function normalizeShortcut(value, fallback) {
+    if (typeof value !== 'string' || value.length === 0) return fallback;
+    return value.toLocaleLowerCase() === 'space' ? ' ' : value;
+  }
+
+  function shortcutLabel(key) {
+    return key === ' ' ? 'Space' : key;
+  }
+
+  function isShortcut(event, key) {
+    return !event.ctrlKey && !event.metaKey && !event.altKey &&
+      event.key.toLocaleLowerCase() === key.toLocaleLowerCase();
   }
 
   function normalizePosition(value) {
@@ -201,7 +221,7 @@
     const action = running ? 'Pause' : 'Start';
     toggleButton.innerHTML = running ? ICONS.pause : ICONS.play;
     toggleButton.setAttribute('aria-label', `${action} auto-scroll`);
-    toggleButton.title = `${action} auto-scroll (S)`;
+    toggleButton.title = `${action} auto-scroll (${shortcutLabel(SHORTCUTS.toggle)})`;
     toggleButton.setAttribute('aria-pressed', String(running));
     controls.dataset.running = String(running);
 
@@ -404,7 +424,7 @@
     controls.setAttribute('aria-label', 'Webtoon auto-scroll controls');
     controls.hidden = true;
     controls.innerHTML = `
-      <button class="toggle-button" type="button" aria-pressed="false" aria-label="Start auto-scroll" title="Start auto-scroll (S)">${ICONS.play}</button>
+      <button class="toggle-button" type="button" aria-pressed="false" aria-label="Start auto-scroll" title="Start auto-scroll (${shortcutLabel(SHORTCUTS.toggle)})">${ICONS.play}</button>
       <input type="range" min="${MIN_SPEED}" max="${MAX_SPEED}" step="5" aria-label="Scroll speed">
       <output></output>
       <button class="position-button" type="button" aria-expanded="false" aria-haspopup="dialog" aria-label="Open auto-scroll settings" title="Auto-scroll settings">${ICONS.position}</button>
@@ -506,12 +526,14 @@
       options[(currentIndex + offset + options.length) % options.length].focus({ preventScroll: true });
       return;
     }
-    if (event.key.toLowerCase() === 's' && !event.ctrlKey && !event.metaKey && !event.altKey) {
+    if (isShortcut(event, SHORTCUTS.toggle)) {
       event.preventDefault();
       setRunning(!running);
-    } else if (event.key === '[') {
+    } else if (isShortcut(event, SHORTCUTS.slower)) {
+      event.preventDefault();
       setSpeed(speed - 5);
-    } else if (event.key === ']') {
+    } else if (isShortcut(event, SHORTCUTS.faster)) {
+      event.preventDefault();
       setSpeed(speed + 5);
     }
   });

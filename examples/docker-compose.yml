@@ -26,6 +26,9 @@ services:
         AUTOSCROLL_VERSION: ${AUTOSCROLL_VERSION:-0.5.1}
     environment:
       KAVITA_UPSTREAM: http://kavita:5000
+      AUTOSCROLL_TOGGLE_SHORTCUT: ${AUTOSCROLL_TOGGLE_SHORTCUT:-s}
+      AUTOSCROLL_SLOWER_SHORTCUT: ${AUTOSCROLL_SLOWER_SHORTCUT:-[}
+      AUTOSCROLL_FASTER_SHORTCUT: ${AUTOSCROLL_FASTER_SHORTCUT:-]}
     depends_on:
       kavita:
         condition: service_healthy

@@ -33,6 +33,6 @@ server {
         # public reverse proxy may compress the modified response afterward.
         proxy_set_header Accept-Encoding "";
         sub_filter_once on;
-        sub_filter '</head>' '<script defer src="/_kavita-autoscroll/kavita-autoscroll.js?v=${AUTOSCROLL_VERSION}"></script></head>';
+        sub_filter '</head>' '<script defer src="/_kavita-autoscroll/kavita-autoscroll.js?v=${AUTOSCROLL_VERSION}" data-toggle-key="${AUTOSCROLL_TOGGLE_SHORTCUT}" data-slower-key="${AUTOSCROLL_SLOWER_SHORTCUT}" data-faster-key="${AUTOSCROLL_FASTER_SHORTCUT}"></script></head>';
     }
 }

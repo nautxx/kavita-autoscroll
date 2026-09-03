@@ -83,7 +83,16 @@ example. Point Caddy or your other public reverse proxy at the injector's port,
 not directly at Kavita. `KAVITA_UPSTREAM` may be changed when your Kavita
 service uses another Compose hostname or port. The example includes a local
 build definition; remove its `build` block if you only want to pull the
-published GHCR image.
+published GHCR image. The injector also reads these optional values from the
+Compose environment:
+
+- `AUTOSCROLL_TOGGLE_SHORTCUT` (default `s`)
+- `AUTOSCROLL_SLOWER_SHORTCUT` (default `[`)
+- `AUTOSCROLL_FASTER_SHORTCUT` (default `]`)
+
+Set them in the Compose `.env` file and recreate the injector container. Values
+use the browser's `KeyboardEvent.key` names, such as `Space`, `ArrowDown`, or a
+single printable character. Avoid double quotes and HTML-special characters.
 
 ## Usage
 
