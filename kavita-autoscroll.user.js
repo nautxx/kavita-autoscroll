@@ -399,6 +399,7 @@
     const style = document.createElement('style');
     style.textContent = `
       #${CONTROL_ID} {
+        --accent: color-mix(in srgb, var(--primary-color, #0a84ff) 72%, transparent);
         position: fixed;
         right: max(16px, env(safe-area-inset-right));
         bottom: max(16px, env(safe-area-inset-bottom), var(--reader-menu-bottom-edge, 0px));
@@ -487,7 +488,7 @@
         border-radius: 2px;
         background: linear-gradient(
           to right,
-          color-mix(in srgb, var(--primary-color, #0a84ff) 72%, transparent) var(--fill, 0%),
+          var(--accent) var(--fill, 0%),
           rgba(255, 255, 255, .25) var(--fill, 0%)
         );
       }
@@ -499,7 +500,7 @@
       #${CONTROL_ID} input[type="range"]::-moz-range-progress {
         height: 4px;
         border-radius: 2px;
-        background: color-mix(in srgb, var(--primary-color, #0a84ff) 72%, transparent);
+        background: var(--accent);
       }
       #${CONTROL_ID} input[type="range"]::-webkit-slider-thumb {
         -webkit-appearance: none;
@@ -572,7 +573,7 @@
         min-width: 32px;
       }
       #${CONTROL_ID} .position-option[aria-checked="true"] {
-        background: color-mix(in srgb, var(--primary-color, #0a84ff) 72%, transparent);
+        background: var(--accent);
       }
       #${CONTROL_ID} .corner-preview {
         position: relative;
@@ -614,7 +615,7 @@
         min-width: 32px;
       }
       #${CONTROL_ID} .auto-start-toggle[aria-pressed="true"] {
-        background: color-mix(in srgb, var(--primary-color, #0a84ff) 72%, transparent);
+        background: var(--accent);
       }
       #${CONTROL_ID} .shortcut-row {
         display: flex;
@@ -635,7 +636,7 @@
         font-variant-numeric: tabular-nums;
       }
       #${CONTROL_ID} .shortcut-key[data-listening="true"] {
-        background: color-mix(in srgb, var(--primary-color, #0a84ff) 72%, transparent);
+        background: var(--accent);
       }
       @media (prefers-reduced-transparency: reduce) {
         #${CONTROL_ID}, #${CONTROL_ID} .position-menu, #${CONTROL_ID} .shortcuts-menu {
