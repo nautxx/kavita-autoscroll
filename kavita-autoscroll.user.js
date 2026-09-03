@@ -27,6 +27,8 @@
   const MIN_SPEED = 25;
   const MAX_SPEED = 600;
   const AUTO_HIDE_DELAY = 2500;
+  const READER_MENU_GAP = 8;
+  const READER_MENU_TRACK_DURATION = 350;
   const READER_ROUTE = /\/manga(?:\/|$)/i;
   const CONTROL_ID = 'kavita-autoscroll';
   const POSITIONS = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
@@ -54,6 +56,8 @@
   let webtoonModeActive = false;
   let animationFrame = 0;
   let autoHideTimer = 0;
+  let readerMenuFrame = 0;
+  let readerMenuTrackUntil = 0;
   let mouseOverControls = false;
   let previousTime = 0;
   let fractionalDistance = 0;
@@ -190,6 +194,59 @@
     scheduleAutoHide();
   }
 
+  function findReaderOverlays(className) {
+    const reader = document.querySelector('.reader');
+    if (!(reader instanceof HTMLElement)) return [];
+
+    return Array.from(reader.children).filter((child) =>
+      child instanceof HTMLElement &&
+      child.classList.contains(className) &&
+      child.classList.contains('overlay')
+    );
+  }
+
+  function syncReaderMenuOffsets() {
+    if (!controls) return;
+
+    const viewportHeight = window.innerHeight;
+    const bottomOverlays = findReaderOverlays('fixed-bottom');
+    const menuOpen = bottomOverlays.length > 0;
+    const topEdge = menuOpen
+      ? Math.max(0, ...findReaderOverlays('fixed-top').map((overlay) =>
+          Math.min(viewportHeight, overlay.getBoundingClientRect().bottom)
+        ))
+      : 0;
+    const bottomEdge = menuOpen
+      ? Math.max(0, ...bottomOverlays.map((overlay) =>
+          Math.min(viewportHeight, viewportHeight - overlay.getBoundingClientRect().top)
+        ))
+      : 0;
+
+    controls.style.setProperty(
+      '--reader-menu-top-edge',
+      `${topEdge > 0 ? topEdge + READER_MENU_GAP : 0}px`
+    );
+    controls.style.setProperty(
+      '--reader-menu-bottom-edge',
+      `${bottomEdge > 0 ? bottomEdge + READER_MENU_GAP : 0}px`
+    );
+  }
+
+  function trackReaderMenuOffsets(duration = READER_MENU_TRACK_DURATION) {
+    readerMenuTrackUntil = Math.max(readerMenuTrackUntil, performance.now() + duration);
+    if (readerMenuFrame) return;
+
+    const track = (now) => {
+      syncReaderMenuOffsets();
+      if (now < readerMenuTrackUntil) {
+        readerMenuFrame = requestAnimationFrame(track);
+      } else {
+        readerMenuFrame = 0;
+      }
+    };
+    readerMenuFrame = requestAnimationFrame(track);
+  }
+
   function setPosition(nextPosition) {
     position = normalizePosition(nextPosition);
     controls.dataset.position = position;
@@ -256,7 +313,7 @@
       #${CONTROL_ID} {
         position: fixed;
         right: max(16px, env(safe-area-inset-right));
-        bottom: max(16px, env(safe-area-inset-bottom));
+        bottom: max(16px, env(safe-area-inset-bottom), var(--reader-menu-bottom-edge, 0px));
         z-index: 2147483647;
         display: flex;
         align-items: center;
@@ -285,13 +342,13 @@
         pointer-events: none;
       }
       #${CONTROL_ID}[data-position="top-left"] {
-        top: max(16px, env(safe-area-inset-top));
+        top: max(16px, env(safe-area-inset-top), var(--reader-menu-top-edge, 0px));
         right: auto;
         bottom: auto;
         left: max(16px, env(safe-area-inset-left));
       }
       #${CONTROL_ID}[data-position="top-right"] {
-        top: max(16px, env(safe-area-inset-top));
+        top: max(16px, env(safe-area-inset-top), var(--reader-menu-top-edge, 0px));
         bottom: auto;
       }
       #${CONTROL_ID}[data-position="bottom-left"] {
@@ -483,6 +540,7 @@
     setPosition(position);
     setAutoStart(autoStart);
     syncReaderState();
+    syncReaderMenuOffsets();
   }
 
   function syncReaderState() {
@@ -555,7 +613,19 @@
     queueMicrotask(syncReaderState);
   };
   addEventListener('popstate', syncReaderState);
+  addEventListener('resize', () => trackReaderMenuOffsets());
+  window.visualViewport?.addEventListener('resize', () => trackReaderMenuOffsets());
+  document.addEventListener('animationstart', (event) => {
+    const target = event.target;
+    if (target instanceof HTMLElement && target.classList.contains('overlay') &&
+        (target.classList.contains('fixed-top') || target.classList.contains('fixed-bottom'))) {
+      trackReaderMenuOffsets();
+    }
+  }, { capture: true });
 
   installControls();
-  new MutationObserver(syncReaderState).observe(document.body, { childList: true, subtree: true });
+  new MutationObserver(() => {
+    syncReaderState();
+    trackReaderMenuOffsets();
+  }).observe(document.body, { childList: true, subtree: true });
 })();

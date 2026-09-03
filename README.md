@@ -17,6 +17,7 @@ Docker injector can place the same script into Kavita's HTML at the server.
 - Automatically hides the controls while scrolling and reveals them on input
 - Can automatically start when Kavita enters Webtoon mode
 - Can be placed in any screen corner and remembers the selection
+- Moves out of the way when Kavita's reader menu opens
 - Pauses when you scroll, click, or touch outside the control
 - Remembers the selected speed in the browser
 - Handles Kavita's normal and fullscreen Webtoon readers
