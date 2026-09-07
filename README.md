@@ -103,7 +103,7 @@ Compose environment:
 - `AUTOSCROLL_SLOWER_SHORTCUT` (default `[`)
 - `AUTOSCROLL_FASTER_SHORTCUT` (default `]`)
 - `AUTOSCROLL_HIDE_SHORTCUT` (default `a`)
-- `AUTOSCROLL_SPEED_STEP` (default `5` pixels per second)
+- `AUTOSCROLL_SPEED_STEP` (default `25` pixels per second)
 
 Set them in the Compose `.env` file and recreate the injector container. Values
 use the browser's `KeyboardEvent.key` names, such as `Space`, `ArrowDown`, or a
