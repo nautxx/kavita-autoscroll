@@ -27,6 +27,7 @@
   const DEFAULT_SPEED = 100;
   const MIN_SPEED = 25;
   const MAX_SPEED = 600;
+  const DEFAULT_SPEED_STEP = 25;
   const AUTO_HIDE_DELAY = 2500;
   const READER_MENU_GAP = 8;
   const READER_MENU_TRACK_DURATION = 350;
@@ -125,7 +126,7 @@
 
   function normalizeSpeedStep(value) {
     const parsedValue = Number(value);
-    return Number.isFinite(parsedValue) && parsedValue > 0 ? parsedValue : 5;
+    return Number.isFinite(parsedValue) && parsedValue > 0 ? parsedValue : DEFAULT_SPEED_STEP;
   }
 
   function shortcutLabel(key) {
