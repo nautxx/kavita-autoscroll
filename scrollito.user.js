@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Scrollito: auto-scroll for Kavita
 // @namespace    https://github.com/nautxx/scrollito
-// @version      1.1.0
+// @version      1.2.0
 // @description  Adjustable, pausable auto-scrolling for Kavita's Webtoon reader.
 // @author       nautxx
 // @license      MIT
@@ -18,7 +18,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '1.1.0';
+  const VERSION = '1.2.0';
   const INSTALL_MARKER = 'data-scrollito';
   const STORAGE_KEY = 'scrollito.speed';
   const POSITION_STORAGE_KEY = 'scrollito.position';
