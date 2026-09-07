@@ -30,6 +30,7 @@
   const AUTO_HIDE_DELAY = 2500;
   const READER_MENU_GAP = 8;
   const READER_MENU_TRACK_DURATION = 350;
+  const SCROLL_CONTAINER_TTL = 250;
   const READER_ROUTE = /\/manga(?:\/|$)/i;
   const CONTROL_ID = 'kavita-autoscroll';
   const POSITIONS = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
@@ -76,6 +77,8 @@
   let previousTime = 0;
   let fractionalDistance = 0;
   let lastAutomaticScroll = 0;
+  let cachedScrollContainer = null;
+  let scrollContainerCheckedAt = 0;
   let controls;
   let toggleButton;
   let speedOutput;
@@ -179,7 +182,16 @@
     );
   }
 
-  function findScrollContainer() {
+  function findScrollContainer(now) {
+    // tick() runs every frame, and resolving this costs a querySelector plus a
+    // style recalc. The answer only changes when the reader enters or leaves
+    // fullscreen, or when its content first grows past the viewport, so a short
+    // cache keeps that off the hot path without noticeably delaying a switch.
+    if (cachedScrollContainer?.isConnected &&
+        now - scrollContainerCheckedAt < SCROLL_CONTAINER_TTL) {
+      return cachedScrollContainer;
+    }
+
     const reader = document.querySelector('.reader');
     const fullscreenElement = document.fullscreenElement || document.webkitFullscreenElement;
     const readerOwnsScroll = reader instanceof HTMLElement &&
@@ -188,7 +200,9 @@
 
     // This mirrors Kavita's InfiniteScrollerComponent: the promoted .reader
     // owns scrolling in fullscreen; otherwise the browser viewport/body does.
-    return readerOwnsScroll ? reader : document.body;
+    scrollContainerCheckedAt = now;
+    cachedScrollContainer = readerOwnsScroll ? reader : document.body;
+    return cachedScrollContainer;
   }
 
   function scrollByPixels(element, pixels) {
@@ -225,7 +239,7 @@
     const wholePixels = Math.floor(fractionalDistance);
     if (wholePixels > 0) {
       fractionalDistance -= wholePixels;
-      const scrollContainer = findScrollContainer();
+      const scrollContainer = findScrollContainer(now);
       scrollByPixels(scrollContainer, wholePixels);
     }
 
@@ -923,9 +937,24 @@
     }
   }, { capture: true });
 
+  function isReaderOverlayNode(node) {
+    return node instanceof HTMLElement && node.classList.contains('overlay') &&
+      (node.classList.contains('fixed-top') || node.classList.contains('fixed-bottom'));
+  }
+
+  function mutatesReaderOverlay(records) {
+    return records.some((record) =>
+      Array.prototype.some.call(record.addedNodes, isReaderOverlayNode) ||
+      Array.prototype.some.call(record.removedNodes, isReaderOverlayNode)
+    );
+  }
+
   installControls();
-  new MutationObserver(() => {
+  new MutationObserver((records) => {
     syncReaderState();
-    trackReaderMenuOffsets();
+    // Kavita adds and removes page images constantly while a webtoon scrolls.
+    // Only a reader menu appearing or leaving can move our anchor, so don't let
+    // image traffic restart the offset-tracking animation loop.
+    if (mutatesReaderOverlay(records)) trackReaderMenuOffsets();
   }).observe(document.body, { childList: true, subtree: true });
 })();
