@@ -63,9 +63,9 @@
   document.documentElement.setAttribute(INSTALL_MARKER, VERSION);
 
   let running = false;
-  let speed = clamp(Number(localStorage.getItem(STORAGE_KEY)) || DEFAULT_SPEED);
-  let position = normalizePosition(localStorage.getItem(POSITION_STORAGE_KEY));
-  let autoStart = localStorage.getItem(AUTO_START_STORAGE_KEY) === 'true';
+  let speed = clamp(Number(readStored(STORAGE_KEY)) || DEFAULT_SPEED);
+  let position = normalizePosition(readStored(POSITION_STORAGE_KEY));
+  let autoStart = readStored(AUTO_START_STORAGE_KEY) === 'true';
   let webtoonModeActive = false;
   let controlsHidden = false;
   let animationFrame = 0;
@@ -95,6 +95,26 @@
     return Math.min(MAX_SPEED, Math.max(MIN_SPEED, value));
   }
 
+  // Blocking site data (Safari's "Block All Cookies", and the equivalent
+  // elsewhere) makes even reading localStorage throw, so every access goes
+  // through these. Preferences then last only as long as the page, which beats
+  // taking the whole control down with them.
+  function readStored(key) {
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  }
+
+  function writeStored(key, value) {
+    try {
+      localStorage.setItem(key, value);
+    } catch {
+      // Storage is unavailable; the in-memory value still applies.
+    }
+  }
+
   function normalizeShortcut(value, fallback) {
     if (typeof value !== 'string' || value.length === 0) return fallback;
     return value.toLocaleLowerCase() === 'space' ? ' ' : value;
@@ -116,7 +136,7 @@
 
   function readStoredShortcuts() {
     try {
-      const parsed = JSON.parse(localStorage.getItem(SHORTCUTS_STORAGE_KEY) || '{}');
+      const parsed = JSON.parse(readStored(SHORTCUTS_STORAGE_KEY) || '{}');
       return parsed && typeof parsed === 'object' ? parsed : {};
     } catch {
       return {};
@@ -137,7 +157,7 @@
   }
 
   function persistShortcuts() {
-    localStorage.setItem(SHORTCUTS_STORAGE_KEY, JSON.stringify(SHORTCUTS));
+    writeStored(SHORTCUTS_STORAGE_KEY, JSON.stringify(SHORTCUTS));
   }
 
   function normalizePosition(value) {
@@ -309,7 +329,7 @@
   function setPosition(nextPosition) {
     position = normalizePosition(nextPosition);
     controls.dataset.position = position;
-    localStorage.setItem(POSITION_STORAGE_KEY, position);
+    writeStored(POSITION_STORAGE_KEY, position);
     positionOptions.forEach((option) => {
       option.setAttribute('aria-checked', String(option.dataset.value === position));
     });
@@ -319,7 +339,7 @@
     autoStart = Boolean(enabled);
     autoStartToggle.setAttribute('aria-pressed', String(autoStart));
     autoStartToggle.title = `${autoStart ? 'Disable' : 'Enable'} auto-start in Webtoon mode`;
-    localStorage.setItem(AUTO_START_STORAGE_KEY, String(autoStart));
+    writeStored(AUTO_START_STORAGE_KEY, String(autoStart));
     if (autoStart && isWebtoonModeActive() && !running) setRunning(true);
   }
 
@@ -422,7 +442,7 @@
     speedSlider.value = String(speed);
     speedSlider.style.setProperty('--fill', `${((speed - MIN_SPEED) / (MAX_SPEED - MIN_SPEED)) * 100}%`);
     speedOutput.textContent = `${speed} px/s`;
-    localStorage.setItem(STORAGE_KEY, String(speed));
+    writeStored(STORAGE_KEY, String(speed));
   }
 
   function installControls() {
