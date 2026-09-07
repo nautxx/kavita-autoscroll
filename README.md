@@ -226,3 +226,8 @@ injector images in GitHub Container Registry.
 ## License
 
 [MIT](./LICENSE)
+
+The control's icons are from [Font Awesome Free](https://fontawesome.com) 7.3.1
+and are licensed [CC BY 4.0](https://fontawesome.com/license/free). They are
+embedded as inline SVG paths rather than loaded as a font, so the script stays a
+single file with no network requests. Kavita's own UI ships the same icon set.
