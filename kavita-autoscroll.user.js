@@ -543,6 +543,10 @@
         overflow: visible;
         fill: currentColor;
       }
+      /* Font Awesome's keyboard glyph fills only 75% of its 512-unit box, where
+         the others fill ~88%, so at a shared height it reads noticeably lighter
+         than its neighbours. Size this one to match their drawn height. */
+      #${CONTROL_ID} .shortcuts-button svg { height: 19px; }
       #${CONTROL_ID} input[type="range"] {
         -webkit-appearance: none;
         appearance: none;
