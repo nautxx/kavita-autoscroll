@@ -451,8 +451,15 @@
     }
   }
 
+  function snapToStep(value) {
+    // The slider can only rest on multiples of the step above MIN_SPEED, so a
+    // speed saved under a different step — an older default, or an injector
+    // value that changed — would leave the thumb and the readout disagreeing.
+    return MIN_SPEED + Math.round((value - MIN_SPEED) / SPEED_STEP) * SPEED_STEP;
+  }
+
   function setSpeed(nextSpeed) {
-    speed = clamp(Number(nextSpeed));
+    speed = clamp(snapToStep(Number(nextSpeed)));
     speedSlider.value = String(speed);
     speedSlider.style.setProperty('--fill', `${((speed - MIN_SPEED) / (MAX_SPEED - MIN_SPEED)) * 100}%`);
     speedOutput.textContent = `${speed} px/s`;
