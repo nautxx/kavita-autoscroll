@@ -20,8 +20,8 @@ server {
     gzip_vary on;
     gzip_types application/javascript application/json text/css text/plain image/svg+xml;
 
-    location = /_kavita-autoscroll/kavita-autoscroll.js {
-        alias /usr/share/nginx/html/kavita-autoscroll.js;
+    location = /_scrollito/scrollito.js {
+        alias /usr/share/nginx/html/scrollito.js;
         default_type application/javascript;
         add_header Cache-Control "no-cache, must-revalidate" always;
         add_header X-Content-Type-Options "nosniff" always;
@@ -41,6 +41,6 @@ server {
         # public reverse proxy may compress the modified response afterward.
         proxy_set_header Accept-Encoding "";
         sub_filter_once on;
-        sub_filter '</head>' '<script defer src="/_kavita-autoscroll/kavita-autoscroll.js?v=${AUTOSCROLL_VERSION}" data-toggle-key="${AUTOSCROLL_TOGGLE_SHORTCUT}" data-slower-key="${AUTOSCROLL_SLOWER_SHORTCUT}" data-faster-key="${AUTOSCROLL_FASTER_SHORTCUT}" data-hide-key="${AUTOSCROLL_HIDE_SHORTCUT}" data-speed-step="${AUTOSCROLL_SPEED_STEP}"></script></head>';
+        sub_filter '</head>' '<script defer src="/_scrollito/scrollito.js?v=${AUTOSCROLL_VERSION}" data-toggle-key="${AUTOSCROLL_TOGGLE_SHORTCUT}" data-slower-key="${AUTOSCROLL_SLOWER_SHORTCUT}" data-faster-key="${AUTOSCROLL_FASTER_SHORTCUT}" data-hide-key="${AUTOSCROLL_HIDE_SHORTCUT}" data-speed-step="${AUTOSCROLL_SPEED_STEP}"></script></head>';
     }
 }
