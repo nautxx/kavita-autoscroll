@@ -1,15 +1,15 @@
 // ==UserScript==
-// @name         Kavita Webtoon Auto-scroll
-// @namespace    https://github.com/nautxx/kavita-autoscroll
+// @name         Scrollito: auto-scroll for Kavita
+// @namespace    https://github.com/nautxx/scrollito
 // @version      1.1.0
 // @description  Adjustable, pausable auto-scrolling for Kavita's Webtoon reader.
 // @author       nautxx
 // @license      MIT
 // @match        *://*/*/manga/*
-// @homepageURL  https://github.com/nautxx/kavita-autoscroll
-// @supportURL   https://github.com/nautxx/kavita-autoscroll/issues
-// @downloadURL  https://raw.githubusercontent.com/nautxx/kavita-autoscroll/main/kavita-autoscroll.user.js
-// @updateURL    https://raw.githubusercontent.com/nautxx/kavita-autoscroll/main/kavita-autoscroll.user.js
+// @homepageURL  https://github.com/nautxx/scrollito
+// @supportURL   https://github.com/nautxx/scrollito/issues
+// @downloadURL  https://raw.githubusercontent.com/nautxx/scrollito/main/scrollito.user.js
+// @updateURL    https://raw.githubusercontent.com/nautxx/scrollito/main/scrollito.user.js
 // @grant        none
 // @run-at       document-idle
 // @noframes
@@ -19,11 +19,11 @@
   'use strict';
 
   const VERSION = '1.1.0';
-  const INSTALL_MARKER = 'data-kavita-autoscroll';
-  const STORAGE_KEY = 'kavita-autoscroll.speed';
-  const POSITION_STORAGE_KEY = 'kavita-autoscroll.position';
-  const AUTO_START_STORAGE_KEY = 'kavita-autoscroll.auto-start';
-  const SHORTCUTS_STORAGE_KEY = 'kavita-autoscroll.shortcuts';
+  const INSTALL_MARKER = 'data-scrollito';
+  const STORAGE_KEY = 'scrollito.speed';
+  const POSITION_STORAGE_KEY = 'scrollito.position';
+  const AUTO_START_STORAGE_KEY = 'scrollito.auto-start';
+  const SHORTCUTS_STORAGE_KEY = 'scrollito.shortcuts';
   const DEFAULT_SPEED = 100;
   const MIN_SPEED = 25;
   const MAX_SPEED = 600;
@@ -33,7 +33,7 @@
   const READER_MENU_TRACK_DURATION = 350;
   const SCROLL_CONTAINER_TTL = 250;
   const READER_ROUTE = /\/manga(?:\/|$)/i;
-  const CONTROL_ID = 'kavita-autoscroll';
+  const CONTROL_ID = 'scrollito';
   const POSITIONS = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
   const SHORTCUT_ACTIONS = ['toggle', 'slower', 'faster', 'hide'];
   const SHORTCUT_LABELS = { toggle: 'Toggle', slower: 'Slower', faster: 'Faster', hide: 'Hide' };

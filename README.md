@@ -1,7 +1,10 @@
-# Kavita Webtoon Auto-scroll
+# Scrollito: auto-scroll for Kavita
 
 Adjustable, pausable auto-scrolling for
 [Kavita](https://www.kavitareader.com/)'s Webtoon reader.
+
+An independent project. Not affiliated with, endorsed by, or part of the Kavita
+project.
 
 The script adds a compact play/pause and speed control to Kavita manga-reader
 pages. It works as a userscript in modern browsers and can also be loaded as a
@@ -45,7 +48,7 @@ script automatically, with no per-device install.
 2. Open Userscripts once so it creates its folder in Files.
 3. In **Settings > Apps > Safari > Extensions**, enable Userscripts.
 4. Download the
-   [raw userscript](https://raw.githubusercontent.com/nautxx/kavita-autoscroll/main/kavita-autoscroll.user.js)
+   [raw userscript](https://raw.githubusercontent.com/nautxx/scrollito/main/scrollito.user.js)
    and save it in the folder selected by Userscripts.
 5. Open your Kavita reader in Safari, allow Userscripts access to the website,
    and reload the page.
@@ -60,7 +63,7 @@ Extension test instead:
    developers**.
 3. In **Settings > Developer**, enable **Allow unsigned extensions**.
 4. Click **Add Temporary Extension…** and select the repository folder.
-5. Enable **Kavita Webtoon Auto-scroll**, grant access to your Kavita website,
+5. Enable **Scrollito**, grant access to your Kavita website,
    and reload the reader.
 
 Safari removes temporary extensions after 24 hours or when Safari quits.
@@ -71,7 +74,7 @@ Safari removes temporary extensions after 24 hours or when Safari quits.
    [Tampermonkey](https://www.tampermonkey.net/) or
    [Violentmonkey](https://violentmonkey.github.io/).
 2. Open the
-   [raw userscript](https://raw.githubusercontent.com/nautxx/kavita-autoscroll/main/kavita-autoscroll.user.js).
+   [raw userscript](https://raw.githubusercontent.com/nautxx/scrollito/main/scrollito.user.js).
 3. Confirm installation, open a Kavita Webtoon, and reload the reader if it was
    already open.
 
@@ -87,7 +90,7 @@ Build it locally from the repository root:
 docker build \
   --file injector/Dockerfile \
   --build-arg AUTOSCROLL_VERSION=1.1.0 \
-  --tag ghcr.io/nautxx/kavita-autoscroll-injector:1.1.0 \
+  --tag ghcr.io/nautxx/scrollito-injector:1.1.0 \
   .
 ```
 
@@ -176,7 +179,7 @@ The script does not read credentials, call Kavita APIs, send data, or load
 remote code. Its only stored values are the scrolling speed, preferred control
 corner, auto-start preference, and any remapped keyboard shortcuts, all in
 that site's local browser storage. Review the complete source in
-[`kavita-autoscroll.user.js`](./kavita-autoscroll.user.js).
+[`scrollito.user.js`](./scrollito.user.js).
 
 ## Browser support
 
@@ -201,7 +204,7 @@ Run the dependency-free preview from the repository root:
 
 Open the URL printed in the terminal. The script starts at port `8080` and
 automatically tries the next port if it is already occupied. The page loads the
-working copy of `kavita-autoscroll.user.js`, mocks Kavita's Webtoon reader and
+working copy of `scrollito.user.js`, mocks Kavita's Webtoon reader and
 animated menus, and reloads automatically after either preview source changes.
 Use the on-page buttons or press `M` to toggle the reader menu and `X` to expand
 its settings area.
