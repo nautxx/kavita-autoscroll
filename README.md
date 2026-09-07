@@ -19,8 +19,9 @@ Docker injector can place the same script into Kavita's HTML at the server.
 - Can be placed in any screen corner and remembers the selection
 - Keyboard shortcuts can be remapped from the settings menu and are
   remembered per browser
-- A hide shortcut hides the control and stops scrolling when you want to
-  scroll manually
+- A hide button (or keyboard shortcut) hides the control and stops
+  scrolling when you want to scroll manually, leaving a small tap target
+  to bring it back
 - Moves out of the way when Kavita's reader menu opens
 - Pauses when you scroll, click, or touch outside the control
 - Remembers the selected speed in the browser
@@ -148,8 +149,9 @@ container after editing `.env`.
   to any corner or enable **Auto-start in Webtoon mode**.
 - Press `S` to toggle scrolling on a hardware keyboard.
 - Press `[` or `]` to decrease or increase speed.
-- Press `A` to hide the control and stop scrolling, such as when you want to
-  scroll manually. Press `A` again to bring it back.
+- Press `A`, or select the eye icon in settings, to hide the control and stop
+  scrolling, such as when you want to scroll manually. A small tab stays in
+  that corner — tap or press `A` again to bring the control back.
 - In settings, select the keyboard icon to remap shortcuts. Select a key
   (`S`, `[`, `]`, or `A`) and press any key to reassign it, or `Escape` to
   cancel. Remapped shortcuts are remembered in that browser and take

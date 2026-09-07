@@ -53,6 +53,8 @@
     position: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.43 12.98c.04-.32.07-.65.07-.98s-.03-.66-.08-.98l2.11-1.65a.5.5 0 0 0 .12-.64l-2-3.46a.5.5 0 0 0-.61-.22l-2.49 1a7.3 7.3 0 0 0-1.69-.98L14.5 2.42A.49.49 0 0 0 14 2h-4a.49.49 0 0 0-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1a.49.49 0 0 0-.61.22l-2 3.46a.49.49 0 0 0 .12.64l2.11 1.65c-.04.32-.08.66-.08.98s.03.66.08.98l-2.11 1.65a.5.5 0 0 0-.12.64l2 3.46c.12.22.38.31.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.04.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.08.49 0 .61-.22l2-3.46a.5.5 0 0 0-.12-.64zM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5"/></svg>',
     autoStart: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 0 0-8.1 5H1l3.6 3.6L8.2 8H6.1A7 7 0 1 1 5 15.7l-1.7 1A9 9 0 1 0 12 3z"/><path d="M10 8v8l6-4z"/></svg>',
     shortcuts: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 5H4c-1.1 0-1.99.9-1.99 2L2 17c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm-9 3h2v2h-2V8zm0 3h2v2h-2v-2zM8 8h2v2H8V8zm0 3h2v2H8v-2zm-1 2H5v-2h2v2zm0-3H5V8h2v2zm9 7H8v-2h8v2zm0-4h-2v-2h2v2zm0-3h-2V8h2v2zm3 3h-2v-2h2v2zm0-3h-2V8h2v2z"/></svg>',
+    eye: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 7.61 17 4.5 12 4.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>',
+    eyeOff: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.42-.08.65 0 1.66 1.34 3 3 3 .23 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78 3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/></svg>',
   };
 
   if (document.documentElement.hasAttribute(INSTALL_MARKER)) return;
@@ -82,6 +84,8 @@
   let autoStartToggle;
   let shortcutsButton;
   let shortcutsMenu;
+  let hideToggle;
+  let revealButton;
   let shortcutButtons = {};
   let remappingAction = null;
 
@@ -241,6 +245,7 @@
       if (!positionMenu.hidden) setPositionMenu(false, false);
       if (!shortcutsMenu.hidden) setShortcutsMenu(false, false);
       if (running) setRunning(false);
+      revealButton.focus({ preventScroll: true });
     } else {
       revealControls();
     }
@@ -374,6 +379,7 @@
       SHORTCUTS[action] = key;
       persistShortcuts();
       updateToggleButtonLabel();
+      updateHideButtonLabels();
     }
     renderShortcutButtons();
   }
@@ -382,6 +388,12 @@
     const action = running ? 'Pause' : 'Start';
     toggleButton.setAttribute('aria-label', `${action} auto-scroll`);
     toggleButton.title = `${action} auto-scroll (${shortcutLabel(SHORTCUTS.toggle)})`;
+  }
+
+  function updateHideButtonLabels() {
+    const key = shortcutLabel(SHORTCUTS.hide);
+    hideToggle.title = `Hide auto-scroll controls (${key})`;
+    revealButton.title = `Show auto-scroll controls (${key})`;
   }
 
   function setRunning(nextRunning) {
@@ -442,8 +454,7 @@
         transition: opacity 200ms ease, transform 200ms ease;
         will-change: opacity, transform;
       }
-      #${CONTROL_ID}[hidden],
-      #${CONTROL_ID}[data-user-hidden="true"] { display: none; }
+      #${CONTROL_ID}[hidden] { display: none; }
       #${CONTROL_ID}[data-autohidden="true"] {
         opacity: 0;
         transform: translateY(8px) scale(.97);
@@ -627,14 +638,37 @@
         border-left: 0;
         border-right: 1px solid rgba(255, 255, 255, .12);
       }
+      #${CONTROL_ID} .hide-column {
+        padding-left: 7px;
+        border-left: 1px solid rgba(255, 255, 255, .12);
+      }
+      #${CONTROL_ID}[data-position$="right"] .hide-column {
+        order: -2;
+        padding-left: 0;
+        padding-right: 7px;
+        border-left: 0;
+        border-right: 1px solid rgba(255, 255, 255, .12);
+      }
       #${CONTROL_ID} .auto-start-toggle,
-      #${CONTROL_ID} .shortcuts-button {
+      #${CONTROL_ID} .shortcuts-button,
+      #${CONTROL_ID} .hide-toggle {
         width: 32px;
         height: 32px;
         min-width: 32px;
       }
       #${CONTROL_ID} .auto-start-toggle[aria-pressed="true"] {
         background: var(--accent);
+      }
+      #${CONTROL_ID} .reveal-button { display: none; }
+      #${CONTROL_ID}[data-user-hidden="true"] {
+        padding: 7px;
+        gap: 0;
+      }
+      #${CONTROL_ID}[data-user-hidden="true"] > *:not(.reveal-button) {
+        display: none;
+      }
+      #${CONTROL_ID}[data-user-hidden="true"] > .reveal-button {
+        display: grid;
       }
       #${CONTROL_ID} .shortcut-row {
         display: flex;
@@ -675,6 +709,7 @@
     controls.setAttribute('aria-label', 'Webtoon auto-scroll controls');
     controls.hidden = true;
     controls.innerHTML = `
+      <button class="reveal-button" type="button" aria-label="Show auto-scroll controls" title="Show auto-scroll controls">${ICONS.eyeOff}</button>
       <button class="toggle-button" type="button" aria-pressed="false" aria-label="Start auto-scroll" title="Start auto-scroll (${shortcutLabel(SHORTCUTS.toggle)})">${ICONS.play}</button>
       <input type="range" min="${MIN_SPEED}" max="${MAX_SPEED}" step="${SPEED_STEP}" aria-label="Scroll speed">
       <output></output>
@@ -694,6 +729,9 @@
           <div class="auto-start-row">
             <button class="shortcuts-button" type="button" aria-expanded="false" aria-haspopup="dialog" aria-label="Open keyboard shortcuts" title="Keyboard shortcuts">${ICONS.shortcuts}</button>
             <button class="auto-start-toggle" type="button" aria-pressed="false" aria-label="Auto-start in Webtoon mode" title="Enable auto-start in Webtoon mode">${ICONS.autoStart}</button>
+          </div>
+          <div class="hide-column">
+            <button class="hide-toggle" type="button" aria-label="Hide auto-scroll controls" title="Hide auto-scroll controls">${ICONS.eye}</button>
           </div>
         </div>
         <div class="shortcuts-menu" role="dialog" aria-label="Keyboard shortcuts" hidden>
@@ -717,6 +755,8 @@
     autoStartToggle = controls.querySelector('.auto-start-toggle');
     shortcutsButton = controls.querySelector('.shortcuts-button');
     shortcutsMenu = controls.querySelector('.shortcuts-menu');
+    hideToggle = controls.querySelector('.hide-toggle');
+    revealButton = controls.querySelector('.reveal-button');
     controls.querySelectorAll('.shortcut-key').forEach((button) => {
       shortcutButtons[button.dataset.action] = button;
       button.addEventListener('click', () => startRemap(button.dataset.action));
@@ -740,6 +780,8 @@
     controls.addEventListener('focusout', scheduleAutoHide);
     positionButton.addEventListener('click', () => setPositionMenu(positionMenu.hidden));
     autoStartToggle.addEventListener('click', () => setAutoStart(!autoStart));
+    hideToggle.addEventListener('click', () => setControlsHidden(true));
+    revealButton.addEventListener('click', () => setControlsHidden(false));
     positionOptions.forEach((option) => {
       option.addEventListener('click', () => {
         setPosition(option.dataset.value);
@@ -749,6 +791,7 @@
     setSpeed(speed);
     setPosition(position);
     setAutoStart(autoStart);
+    updateHideButtonLabels();
     syncReaderState();
     syncReaderMenuOffsets();
   }
