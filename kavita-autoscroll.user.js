@@ -746,7 +746,7 @@
     `;
     document.body.append(controls);
 
-    toggleButton = controls.querySelector('button');
+    toggleButton = controls.querySelector('.toggle-button');
     speedSlider = controls.querySelector('input[type="range"]');
     speedOutput = controls.querySelector('output');
     positionButton = controls.querySelector('.position-button');
