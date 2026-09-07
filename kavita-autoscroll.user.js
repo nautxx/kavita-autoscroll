@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kavita Webtoon Auto-scroll
 // @namespace    https://github.com/nautxx/kavita-autoscroll
-// @version      0.7.0
+// @version      0.8.0
 // @description  Adjustable, pausable auto-scrolling for Kavita's Webtoon reader.
 // @author       nautxx
 // @license      MIT
@@ -18,7 +18,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '0.7.0';
+  const VERSION = '0.8.0';
   const INSTALL_MARKER = 'data-kavita-autoscroll';
   const STORAGE_KEY = 'kavita-autoscroll.speed';
   const POSITION_STORAGE_KEY = 'kavita-autoscroll.position';
