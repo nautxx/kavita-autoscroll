@@ -33,10 +33,15 @@
   const READER_ROUTE = /\/manga(?:\/|$)/i;
   const CONTROL_ID = 'kavita-autoscroll';
   const POSITIONS = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
-  const SHORTCUT_ACTIONS = ['toggle', 'slower', 'faster'];
-  const SHORTCUT_LABELS = { toggle: 'Toggle', slower: 'Slower', faster: 'Faster' };
-  const SHORTCUT_DEFAULTS = { toggle: 's', slower: '[', faster: ']' };
-  const SHORTCUT_INJECTED_KEYS = { toggle: 'toggleKey', slower: 'slowerKey', faster: 'fasterKey' };
+  const SHORTCUT_ACTIONS = ['toggle', 'slower', 'faster', 'hide'];
+  const SHORTCUT_LABELS = { toggle: 'Toggle', slower: 'Slower', faster: 'Faster', hide: 'Hide' };
+  const SHORTCUT_DEFAULTS = { toggle: 's', slower: '[', faster: ']', hide: 'a' };
+  const SHORTCUT_INJECTED_KEYS = {
+    toggle: 'toggleKey',
+    slower: 'slowerKey',
+    faster: 'fasterKey',
+    hide: 'hideKey',
+  };
   const injectedConfig = document.currentScript?.dataset ?? {};
   const SPEED_STEP = normalizeSpeedStep(injectedConfig.speedStep);
   // A stored remap always wins; otherwise the injector's data-* value (if any)
@@ -58,6 +63,7 @@
   let position = normalizePosition(localStorage.getItem(POSITION_STORAGE_KEY));
   let autoStart = localStorage.getItem(AUTO_START_STORAGE_KEY) === 'true';
   let webtoonModeActive = false;
+  let controlsHidden = false;
   let animationFrame = 0;
   let autoHideTimer = 0;
   let readerMenuFrame = 0;
@@ -226,6 +232,18 @@
     if (!controls) return;
     controls.dataset.autohidden = 'false';
     scheduleAutoHide();
+  }
+
+  function setControlsHidden(nextHidden) {
+    controlsHidden = Boolean(nextHidden);
+    controls.dataset.userHidden = String(controlsHidden);
+    if (controlsHidden) {
+      if (!positionMenu.hidden) setPositionMenu(false, false);
+      if (!shortcutsMenu.hidden) setShortcutsMenu(false, false);
+      if (running) setRunning(false);
+    } else {
+      revealControls();
+    }
   }
 
   function findReaderOverlays(className) {
@@ -424,7 +442,8 @@
         transition: opacity 200ms ease, transform 200ms ease;
         will-change: opacity, transform;
       }
-      #${CONTROL_ID}[hidden] { display: none; }
+      #${CONTROL_ID}[hidden],
+      #${CONTROL_ID}[data-user-hidden="true"] { display: none; }
       #${CONTROL_ID}[data-autohidden="true"] {
         opacity: 0;
         transform: translateY(8px) scale(.97);
@@ -808,6 +827,9 @@
     } else if (isShortcut(event, SHORTCUTS.faster)) {
       event.preventDefault();
       setSpeed(speed + SPEED_STEP);
+    } else if (isShortcut(event, SHORTCUTS.hide)) {
+      event.preventDefault();
+      setControlsHidden(!controlsHidden);
     }
   });
 
