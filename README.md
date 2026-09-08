@@ -18,7 +18,8 @@ Docker injector can place the same script into Kavita's HTML at the server.
 - Adjustable scrolling from 25 to 600 pixels per second
 - Play/pause control suitable for mouse or touch
 - Automatically hides the controls while scrolling and reveals them on input
-- Can automatically start when Kavita enters Webtoon mode
+- Can automatically start when Kavita enters Webtoon mode, and the Docker
+  injector can turn auto-start or slip mode on by default
 - Can be placed in any screen corner and remembers the selection
 - Keyboard shortcuts can be remapped from the settings menu and are
   remembered per browser
@@ -109,12 +110,19 @@ Compose environment:
 - `AUTOSCROLL_FASTER_SHORTCUT` (default `]`)
 - `AUTOSCROLL_HIDE_SHORTCUT` (default `a`)
 - `AUTOSCROLL_SPEED_STEP` (default `25` pixels per second)
+- `AUTOSCROLL_AUTO_START` (default `false`)
+- `AUTOSCROLL_SLIP_MODE` (default `false`)
 
 Set them in the Compose `.env` file and recreate the injector container. Values
 use the browser's `KeyboardEvent.key` names, such as `Space`, `ArrowDown`, or a
 single printable character. Avoid double quotes and HTML-special characters in
 shortcut values. `AUTOSCROLL_SPEED_STEP` must be a positive number and controls
 both the keyboard increment and slider step.
+
+`AUTOSCROLL_AUTO_START` and `AUTOSCROLL_SLIP_MODE` accept `true` or `false`
+and decide how those two toggles start out for a reader who has not touched
+them. They are defaults, not policies: once someone flips either toggle, that
+browser keeps their choice and ignores the configured value.
 
 ### Keybindings
 
@@ -140,6 +148,8 @@ AUTOSCROLL_TOGGLE_SHORTCUT=Enter
 AUTOSCROLL_SLOWER_SHORTCUT=ArrowDown
 AUTOSCROLL_FASTER_SHORTCUT=ArrowUp
 AUTOSCROLL_SPEED_STEP=10
+AUTOSCROLL_AUTO_START=true
+AUTOSCROLL_SLIP_MODE=true
 ```
 
 Key names are case-insensitive. Each binding must be one key; combinations
