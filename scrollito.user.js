@@ -374,7 +374,11 @@
     icon.style.width = 'auto';
     icon.style.height = '1em';
     icon.style.verticalAlign = '-0.125em';
-    icon.style.fill = 'currentColor';
+    // Lit in the reader's own accent while the control is up, plain when it is
+    // not. Dimming would be the obvious cue, but Kavita disables its
+    // reading-direction button in Webtoon mode, so a faded icon already sits
+    // next to this one meaning something else entirely.
+    icon.style.fill = controlsHidden ? 'currentColor' : 'var(--primary-color, #0a84ff)';
   }
 
   function syncReaderMenuOffsets() {
