@@ -330,17 +330,23 @@
         ))
       : 0;
 
+    // The settings drawer can make the menu tall enough to cover most of the
+    // screen, so cap the offset at the point where the control would start
+    // leaving the viewport.
+    const maxEdge = Math.max(0, viewportHeight - controls.offsetHeight - READER_MENU_GAP * 2);
+
     controls.style.setProperty(
       '--reader-menu-top-edge',
-      `${topEdge > 0 ? topEdge + READER_MENU_GAP : 0}px`
+      `${topEdge > 0 ? Math.min(topEdge + READER_MENU_GAP, maxEdge) : 0}px`
     );
     controls.style.setProperty(
       '--reader-menu-bottom-edge',
-      `${bottomEdge > 0 ? bottomEdge + READER_MENU_GAP : 0}px`
+      `${bottomEdge > 0 ? Math.min(bottomEdge + READER_MENU_GAP, maxEdge) : 0}px`
     );
   }
 
   function trackReaderMenuOffsets(duration = READER_MENU_TRACK_DURATION) {
+    observeReaderOverlays();
     readerMenuTrackUntil = Math.max(readerMenuTrackUntil, performance.now() + duration);
     if (readerMenuFrame) return;
 
@@ -353,6 +359,20 @@
       }
     };
     readerMenuFrame = requestAnimationFrame(track);
+  }
+
+  // Kavita renders its settings drawer inside the existing .fixed-bottom
+  // overlay, so opening it grows that element without adding or removing a node
+  // the MutationObserver would recognize. Watching the overlays directly keeps
+  // the control clear of the taller menu, and follows the slide animation for
+  // free since ResizeObserver reports every frame the box changes.
+  const readerOverlayResize = new ResizeObserver(() => syncReaderMenuOffsets());
+  let trackedReaderOverlays = [];
+
+  function observeReaderOverlays() {
+    trackedReaderOverlays = [...findReaderOverlays('fixed-top'), ...findReaderOverlays('fixed-bottom')];
+    readerOverlayResize.disconnect();
+    for (const overlay of trackedReaderOverlays) readerOverlayResize.observe(overlay);
   }
 
   function setPosition(nextPosition) {
@@ -871,6 +891,7 @@
     setSlipMode(slipMode);
     updateHideButtonLabels();
     syncReaderState();
+    observeReaderOverlays();
     syncReaderMenuOffsets();
   }
 
@@ -1020,12 +1041,28 @@
     );
   }
 
+  // Kavita renders its settings drawer as a child of the bottom overlay, so
+  // opening it resizes a menu we already track rather than adding a new one.
+  // With no menu open the list is empty and this costs nothing.
+  function mutatesInsideReaderOverlay(records) {
+    return trackedReaderOverlays.length > 0 && records.some((record) =>
+      trackedReaderOverlays.some((overlay) => overlay.contains(record.target))
+    );
+  }
+
   installControls();
   new MutationObserver((records) => {
     syncReaderState();
     // Kavita adds and removes page images constantly while a webtoon scrolls.
     // Only a reader menu appearing or leaving can move our anchor, so don't let
     // image traffic restart the offset-tracking animation loop.
-    if (mutatesReaderOverlay(records)) trackReaderMenuOffsets();
+    if (mutatesReaderOverlay(records)) {
+      trackReaderMenuOffsets();
+    } else if (mutatesInsideReaderOverlay(records)) {
+      // The menu is already open and only changed size, and its own slider
+      // churns as pages advance, so recompute once rather than restarting the
+      // loop on every update.
+      syncReaderMenuOffsets();
+    }
   }).observe(document.body, { childList: true, subtree: true });
 })();
