@@ -76,9 +76,9 @@
   let position = normalizePosition(readStored(POSITION_STORAGE_KEY));
   let autoStart = readStoredFlag(AUTO_START_STORAGE_KEY, AUTO_START_DEFAULT);
   let slipMode = readStoredFlag(SLIP_STORAGE_KEY, SLIP_DEFAULT);
-  let slipHeld = false;
-  let webtoonModeActive = false;
+  let gestureActive = false;
   let controlsHidden = false;
+  let controlsAutoHidden = false;
   let animationFrame = 0;
   let autoHideTimer = 0;
   let readerMenuFrame = 0;
@@ -88,6 +88,8 @@
   let fractionalDistance = 0;
   let lastAutomaticScroll = 0;
   let cachedScrollContainer = null;
+  let cachedInfiniteScroller = null;
+  let scrollWriter = null;
   let scrollContainerCheckedAt = 0;
   let controls;
   let toggleButton;
@@ -102,7 +104,7 @@
   let shortcutsMenu;
   let hideToggle;
   let revealButton;
-  let shortcutButtons = {};
+  const shortcutButtons = {};
   let remappingAction = null;
   let menuToggleSlot = null;
   let readerMenuLayoutUnsupported = false;
@@ -199,7 +201,14 @@
   }
 
   function isWebtoonModeActive() {
-    return isReaderRoute() && Boolean(document.querySelector('app-infinite-scroller'));
+    if (!isReaderRoute()) return false;
+    // The MutationObserver asks this on every batch, and Kavita's page images
+    // make those constant. A disconnected node answers it without a search,
+    // and going stale is self-healing: leaving the reader detaches it.
+    if (!cachedInfiniteScroller?.isConnected) {
+      cachedInfiniteScroller = document.querySelector('app-infinite-scroller');
+    }
+    return Boolean(cachedInfiniteScroller);
   }
 
   function isEditableTarget(target) {
@@ -232,27 +241,50 @@
     return cachedScrollContainer;
   }
 
-  function scrollByPixels(element, pixels) {
-    lastAutomaticScroll = performance.now();
+  // Kavita subscribes to scroll events on document.body outside fullscreen.
+  // Safari's standards-mode scroll owner can nevertheless vary, so these are
+  // tried in order until one actually moves.
+  const SCROLL_WRITERS = [
+    {
+      read: () => document.body.scrollTop,
+      write: (pixels) => { document.body.scrollTop += pixels; },
+    },
+    {
+      read: () => document.documentElement.scrollTop,
+      write: (pixels) => { document.documentElement.scrollTop += pixels; },
+    },
+    {
+      read: () => window.scrollY,
+      write: (pixels) => window.scrollBy(0, pixels),
+    },
+  ];
+
+  function scrollByPixels(element, pixels, now) {
+    lastAutomaticScroll = now;
     if (element !== document.body) {
       element.scrollTop += pixels;
-      return element.scrollTop;
+      return;
     }
 
-    // Kavita subscribes to scroll events on document.body outside fullscreen.
-    // Safari's standards-mode scroll owner can nevertheless vary, so try each
-    // browser representation in order and stop as soon as one actually moves.
-    const bodyBefore = document.body.scrollTop;
-    document.body.scrollTop = bodyBefore + pixels;
-    if (document.body.scrollTop !== bodyBefore) return document.body.scrollTop;
+    // Whichever representation won last frame almost always wins again, so
+    // spend one write on it rather than replaying the whole chain. Re-probing
+    // only on a miss keeps a fullscreen switch working without costing a
+    // wasted write and two forced layout reads on every other frame.
+    if (scrollWriter) {
+      const before = scrollWriter.read();
+      scrollWriter.write(pixels);
+      if (scrollWriter.read() !== before) return;
+    }
 
-    const rootBefore = document.documentElement.scrollTop;
-    document.documentElement.scrollTop = rootBefore + pixels;
-    if (document.documentElement.scrollTop !== rootBefore) return document.documentElement.scrollTop;
-
-    const windowBefore = window.scrollY;
-    window.scrollBy(0, pixels);
-    return window.scrollY !== windowBefore ? window.scrollY : bodyBefore;
+    for (const writer of SCROLL_WRITERS) {
+      if (writer === scrollWriter) continue;
+      const before = writer.read();
+      writer.write(pixels);
+      if (writer.read() !== before) {
+        scrollWriter = writer;
+        return;
+      }
+    }
   }
 
   function tick(now) {
@@ -260,8 +292,10 @@
 
     // Slip mode keeps running through a manual gesture, but advancing while a
     // finger is still down would fight the drag, so hold the clock — and the
-    // pace with it — until the pointer lifts.
-    if (slipHeld) {
+    // pace with it — until the pointer lifts. Derived here rather than latched
+    // when the gesture starts, so toggling slip mode or pausing mid-drag needs
+    // no separate reset.
+    if (gestureActive && slipMode) {
       previousTime = now;
       animationFrame = requestAnimationFrame(tick);
       return;
@@ -276,7 +310,7 @@
     if (wholePixels > 0) {
       fractionalDistance -= wholePixels;
       const scrollContainer = findScrollContainer(now);
-      scrollByPixels(scrollContainer, wholePixels);
+      scrollByPixels(scrollContainer, wholePixels, now);
     }
 
     animationFrame = requestAnimationFrame(tick);
@@ -291,12 +325,12 @@
     autoHideTimer = 0;
     const keyboardFocusWithin = controls.contains(document.activeElement) &&
       document.activeElement.matches(':focus-visible');
-    if (!running || mouseOverControls || keyboardFocusWithin || !positionMenu.hidden || !shortcutsMenu.hidden) {
+    if (!running || mouseOverControls || keyboardFocusWithin || anyMenuOpen()) {
       if (running) scheduleAutoHide();
       return;
     }
 
-    controls.dataset.autohidden = 'true';
+    setAutoHidden(true);
   }
 
   function scheduleAutoHide() {
@@ -304,20 +338,27 @@
     if (running) autoHideTimer = window.setTimeout(hideControls, AUTO_HIDE_DELAY);
   }
 
+  // Called from pointermove, wheel and every keydown, so touching the DOM only
+  // on an actual transition keeps a style invalidation off those paths.
+  function setAutoHidden(hidden) {
+    if (controlsAutoHidden === hidden) return;
+    controlsAutoHidden = hidden;
+    controls.dataset.autohidden = String(hidden);
+  }
+
   function revealControls() {
     if (!controls) return;
-    controls.dataset.autohidden = 'false';
+    setAutoHidden(false);
     scheduleAutoHide();
   }
 
   function setControlsHidden(nextHidden) {
     controlsHidden = Boolean(nextHidden);
     controls.dataset.userHidden = String(controlsHidden);
+    syncMenuToggleButton();
     if (controlsHidden) {
-      if (!positionMenu.hidden) setPositionMenu(false, false);
-      if (!shortcutsMenu.hidden) setShortcutsMenu(false, false);
+      closeMenus();
       if (running) setRunning(false);
-      syncMenuToggleButton();
       // The control is about to be display:none, so focus has to move off it or
       // the browser drops it to <body> and the tab order restarts. Hand it to
       // whichever reveal control is on screen; with the menu closed there is
@@ -327,25 +368,46 @@
         : revealButton;
       menuToggle?.focus({ preventScroll: true });
     } else {
-      syncMenuToggleButton();
       revealControls();
     }
   }
 
-  function findReaderOverlays(className) {
-    const reader = document.querySelector('.reader');
-    if (!(reader instanceof HTMLElement)) return [];
+  // The one place that knows how Kavita marks a reader overlay. Everything
+  // else — the offset maths, the resize observer, the animation tracking and
+  // the mutation filter — asks through here.
+  function readerOverlayEdge(node) {
+    if (!(node instanceof HTMLElement) || !node.classList.contains('overlay')) return null;
+    if (node.classList.contains('fixed-top')) return 'top';
+    if (node.classList.contains('fixed-bottom')) return 'bottom';
+    return null;
+  }
 
-    return Array.from(reader.children).filter((child) =>
-      child instanceof HTMLElement &&
-      child.classList.contains(className) &&
-      child.classList.contains('overlay')
-    );
+  // Both edges from a single .reader lookup and one children pass: callers used
+  // to run this twice per frame to ask about one class each.
+  function findReaderOverlays() {
+    const reader = document.querySelector('.reader');
+    const overlays = { top: [], bottom: [] };
+    if (!(reader instanceof HTMLElement)) return overlays;
+
+    for (const child of reader.children) {
+      const edge = readerOverlayEdge(child);
+      if (edge) overlays[edge].push(child);
+    }
+    return overlays;
   }
 
   // Kavita lays its bottom-bar icons out as Bootstrap columns in a .row, so an
   // extra .col is spaced evenly with the rest for free. The row sits outside
   // the settings pane's @if block, which is why it survives that toggling.
+  function anyMenuOpen() {
+    return !positionMenu.hidden || !shortcutsMenu.hidden;
+  }
+
+  function closeMenus() {
+    if (!positionMenu.hidden) setPositionMenu(false, false);
+    if (!shortcutsMenu.hidden) setShortcutsMenu(false, false);
+  }
+
   function findReaderMenuIconRow(bottomOverlay) {
     const rows = Array.from(bottomOverlay.querySelectorAll(':scope > .row'));
     return rows.reverse().find((row) => row.querySelector(':scope > .col > button')) ?? null;
@@ -354,7 +416,7 @@
   // The slot is permanent rather than added only while hidden: a column that
   // came and went would shift Kavita's own icons on every toggle.
   function syncMenuToggleButton() {
-    const [bottomOverlay] = findReaderOverlays('fixed-bottom');
+    const [bottomOverlay] = findReaderOverlays().bottom;
     const row = bottomOverlay ? findReaderMenuIconRow(bottomOverlay) : null;
 
     // Whether this Kavita can carry the button is a property of its markup, not
@@ -379,6 +441,14 @@
       button.type = 'button';
       button.className = 'btn btn-icon';
       button.addEventListener('click', () => setControlsHidden(!controlsHidden));
+      // Sized the way Font Awesome matches its own inline SVGs to its glyphs,
+      // in em so it tracks whatever font size the reader uses. Set once here:
+      // none of it depends on state, only the fill below does.
+      button.innerHTML = ICONS.autoScroll;
+      const icon = button.firstElementChild;
+      icon.style.width = 'auto';
+      icon.style.height = '1em';
+      icon.style.verticalAlign = '-0.125em';
       menuToggleSlot.append(button);
       row.prepend(menuToggleSlot);
     }
@@ -395,33 +465,33 @@
     button.setAttribute('aria-label', `${action} auto-scroll controls`);
     button.setAttribute('aria-pressed', String(controlsHidden));
     button.title = `${action} auto-scroll controls (${shortcutLabel(SHORTCUTS.hide)})`;
-    // One mark for Scrollito rather than a two-state eye: whether the control
-    // is on screen already answers the question the eye was answering, so the
-    // icon is free to say which feature this is instead.
-    if (!button.firstElementChild) button.innerHTML = ICONS.autoScroll;
-
-    // Scrollito's stylesheet does not reach inside Kavita's DOM, so size the
-    // icon the way Font Awesome sizes its own inline SVGs against its glyphs.
-    // Staying in em keeps it matched to whatever font size the reader uses.
-    const icon = button.querySelector('svg');
-    icon.style.width = 'auto';
-    icon.style.height = '1em';
-    icon.style.verticalAlign = '-0.125em';
     // Lit in the reader's own accent while the control is up, plain when it is
     // not. Dimming would be the obvious cue, but Kavita disables its
     // reading-direction button in Webtoon mode, so a faded icon already sits
     // next to this one meaning something else entirely.
-    icon.style.fill = controlsHidden ? 'currentColor' : 'var(--primary-color, #0a84ff)';
+    button.firstElementChild.style.fill =
+      controlsHidden ? 'currentColor' : 'var(--primary-color, #0a84ff)';
+  }
+
+  // Re-running these writes every frame invalidates style on an element that
+  // carries a transition, so only write what actually changed.
+  const writtenMenuEdges = new Map();
+
+  function setMenuEdge(property, edge, maxEdge) {
+    const value = `${edge > 0 ? Math.min(edge + READER_MENU_GAP, maxEdge) : 0}px`;
+    if (writtenMenuEdges.get(property) === value) return;
+    writtenMenuEdges.set(property, value);
+    controls.style.setProperty(property, value);
   }
 
   function syncReaderMenuOffsets() {
     if (!controls) return;
 
     const viewportHeight = window.innerHeight;
-    const bottomOverlays = findReaderOverlays('fixed-bottom');
+    const { top: topOverlays, bottom: bottomOverlays } = findReaderOverlays();
     const menuOpen = bottomOverlays.length > 0;
     const topEdge = menuOpen
-      ? Math.max(0, ...findReaderOverlays('fixed-top').map((overlay) =>
+      ? Math.max(0, ...topOverlays.map((overlay) =>
           Math.min(viewportHeight, overlay.getBoundingClientRect().bottom)
         ))
       : 0;
@@ -436,14 +506,8 @@
     // leaving the viewport.
     const maxEdge = Math.max(0, viewportHeight - controls.offsetHeight - READER_MENU_GAP * 2);
 
-    controls.style.setProperty(
-      '--reader-menu-top-edge',
-      `${topEdge > 0 ? Math.min(topEdge + READER_MENU_GAP, maxEdge) : 0}px`
-    );
-    controls.style.setProperty(
-      '--reader-menu-bottom-edge',
-      `${bottomEdge > 0 ? Math.min(bottomEdge + READER_MENU_GAP, maxEdge) : 0}px`
-    );
+    setMenuEdge('--reader-menu-top-edge', topEdge, maxEdge);
+    setMenuEdge('--reader-menu-bottom-edge', bottomEdge, maxEdge);
   }
 
   function trackReaderMenuOffsets(duration = READER_MENU_TRACK_DURATION) {
@@ -471,7 +535,8 @@
   let trackedReaderOverlays = [];
 
   function observeReaderOverlays() {
-    const overlays = [...findReaderOverlays('fixed-top'), ...findReaderOverlays('fixed-bottom')];
+    const { top, bottom } = findReaderOverlays();
+    const overlays = [...top, ...bottom];
     // Resizing fires this far more often than menus open, and re-observing an
     // unchanged set costs a teardown plus an initial callback per element.
     const unchanged = overlays.length === trackedReaderOverlays.length &&
@@ -502,7 +567,6 @@
 
   function setSlipMode(enabled) {
     slipMode = Boolean(enabled);
-    slipHeld = false;
     slipToggle.setAttribute('aria-pressed', String(slipMode));
     slipToggle.title = `${slipMode ? 'Disable' : 'Enable'} slip mode (keep scrolling after a manual scroll)`;
     writeStored(SLIP_STORAGE_KEY, String(slipMode));
@@ -588,7 +652,6 @@
     running = nextRunning && isWebtoonModeActive();
     previousTime = 0;
     fractionalDistance = 0;
-    slipHeld = false;
     toggleButton.innerHTML = running ? ICONS.pause : ICONS.play;
     updateToggleButtonLabel();
     toggleButton.setAttribute('aria-pressed', String(running));
@@ -1017,23 +1080,23 @@
   }
 
   function syncReaderState() {
-    const nextWebtoonModeActive = isWebtoonModeActive();
-    if (controls.hidden === nextWebtoonModeActive) controls.hidden = !nextWebtoonModeActive;
+    const active = isWebtoonModeActive();
+    // controls.hidden already records whether the reader was active last time,
+    // so read it before overwriting rather than shadowing it in a variable.
+    const wasActive = !controls.hidden;
+    controls.hidden = !active;
 
-    if (!nextWebtoonModeActive) {
+    if (!active) {
       if (running) setRunning(false);
-    } else if (!webtoonModeActive && autoStart && !running) {
+    } else if (!wasActive && autoStart && !running) {
       setRunning(true);
     }
-
-    webtoonModeActive = nextWebtoonModeActive;
   }
 
   function pauseForManualInput(event) {
     revealControls();
     const outsideControls = !controls.contains(event.target);
-    if (outsideControls && !positionMenu.hidden) setPositionMenu(false, false);
-    if (outsideControls && !shortcutsMenu.hidden) setShortcutsMenu(false, false);
+    if (outsideControls) closeMenus();
     if (!running || !outsideControls) return;
     // Slip mode reads a manual scroll as a seek rather than a stop: the pace
     // resumes from wherever the gesture left the page.
@@ -1041,45 +1104,47 @@
     setRunning(false);
   }
 
-  function holdForSlip(event) {
-    if (slipMode && running && !controls.contains(event.target)) slipHeld = true;
+  function beginGesture(event) {
+    if (!controls.contains(event.target)) gestureActive = true;
   }
 
-  function releaseTouchSlipHold(event) {
-    if (event.touches.length === 0) slipHeld = false;
+  function endTouchGesture(event) {
+    if (event.touches.length === 0) gestureActive = false;
   }
 
-  function holdMouseForSlip(event) {
-    if (event.pointerType === 'mouse') holdForSlip(event);
+  function endMouseGesture(event) {
+    if (event.pointerType === 'mouse') gestureActive = false;
   }
 
-  function releaseMouseSlipHold(event) {
-    if (event.pointerType === 'mouse') slipHeld = false;
-  }
+  const CAPTURE_PASSIVE = { passive: true, capture: true };
 
   document.addEventListener('pointermove', (event) => {
     if (event.pointerType !== 'mouse') return;
     // A button released outside the window never delivers pointerup, so treat
-    // any buttonless move as the end of a mouse-driven slip hold.
-    if (slipHeld && event.buttons === 0) slipHeld = false;
+    // any buttonless move as the end of a mouse-driven gesture.
+    if (gestureActive && event.buttons === 0) gestureActive = false;
     revealControls();
   }, { passive: true });
-  document.addEventListener('wheel', pauseForManualInput, { passive: true, capture: true });
-  document.addEventListener('touchstart', pauseForManualInput, { passive: true, capture: true });
-  document.addEventListener('pointerdown', pauseForManualInput, { passive: true, capture: true });
-  // Touch holds run off touch events, not pointer ones: Safari cancels the
+  document.addEventListener('wheel', pauseForManualInput, CAPTURE_PASSIVE);
+  // Touch gestures run off touch events, not pointer ones: Safari cancels the
   // pointer as soon as it takes the gesture over for native scrolling, which is
-  // exactly the stretch the hold has to cover. Mice keep the pointer stream, so
-  // a drag on a scrollbar holds too.
-  document.addEventListener('touchstart', holdForSlip, { passive: true, capture: true });
-  document.addEventListener('touchend', releaseTouchSlipHold, { passive: true, capture: true });
-  document.addEventListener('touchcancel', releaseTouchSlipHold, { passive: true, capture: true });
-  document.addEventListener('pointerdown', holdMouseForSlip, { passive: true, capture: true });
-  document.addEventListener('pointerup', releaseMouseSlipHold, { passive: true, capture: true });
-  document.addEventListener('pointercancel', releaseMouseSlipHold, { passive: true, capture: true });
+  // exactly the stretch slip mode has to cover. Mice keep the pointer stream,
+  // so a drag on a scrollbar counts too.
+  document.addEventListener('touchstart', (event) => {
+    pauseForManualInput(event);
+    beginGesture(event);
+  }, CAPTURE_PASSIVE);
+  document.addEventListener('touchend', endTouchGesture, CAPTURE_PASSIVE);
+  document.addEventListener('touchcancel', endTouchGesture, CAPTURE_PASSIVE);
+  document.addEventListener('pointerdown', (event) => {
+    pauseForManualInput(event);
+    if (event.pointerType === 'mouse') beginGesture(event);
+  }, CAPTURE_PASSIVE);
+  document.addEventListener('pointerup', endMouseGesture, CAPTURE_PASSIVE);
+  document.addEventListener('pointercancel', endMouseGesture, CAPTURE_PASSIVE);
   document.addEventListener('scroll', (event) => {
     if (running && performance.now() - lastAutomaticScroll > 150) pauseForManualInput(event);
-  }, { passive: true, capture: true });
+  }, CAPTURE_PASSIVE);
   document.addEventListener('keydown', (event) => {
     if (remappingAction) {
       if (event.key === 'Escape') {
@@ -1143,16 +1208,11 @@
   addEventListener('resize', () => trackReaderMenuOffsets());
   window.visualViewport?.addEventListener('resize', () => trackReaderMenuOffsets());
   document.addEventListener('animationstart', (event) => {
-    const target = event.target;
-    if (target instanceof HTMLElement && target.classList.contains('overlay') &&
-        (target.classList.contains('fixed-top') || target.classList.contains('fixed-bottom'))) {
-      trackReaderMenuOffsets();
-    }
+    if (readerOverlayEdge(event.target)) trackReaderMenuOffsets();
   }, { capture: true });
 
   function isReaderOverlayNode(node) {
-    return node instanceof HTMLElement && node.classList.contains('overlay') &&
-      (node.classList.contains('fixed-top') || node.classList.contains('fixed-bottom'));
+    return Boolean(readerOverlayEdge(node));
   }
 
   function mutatesReaderOverlay(records) {
