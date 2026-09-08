@@ -99,6 +99,7 @@
   let revealButton;
   let shortcutButtons = {};
   let remappingAction = null;
+  let menuToggleSlot = null;
 
   function clamp(value) {
     return Math.min(MAX_SPEED, Math.max(MIN_SPEED, value));
@@ -296,8 +297,10 @@
       if (!positionMenu.hidden) setPositionMenu(false, false);
       if (!shortcutsMenu.hidden) setShortcutsMenu(false, false);
       if (running) setRunning(false);
-      revealButton.focus({ preventScroll: true });
+      syncMenuToggleButton();
+      if (controls.dataset.revealInMenu !== 'true') revealButton.focus({ preventScroll: true });
     } else {
+      syncMenuToggleButton();
       revealControls();
     }
   }
@@ -311,6 +314,63 @@
       child.classList.contains(className) &&
       child.classList.contains('overlay')
     );
+  }
+
+  // Kavita lays its bottom-bar icons out as Bootstrap columns in a .row, so an
+  // extra .col is spaced evenly with the rest for free. The row sits outside
+  // the settings pane's @if block, which is why it survives that toggling.
+  function findReaderMenuIconRow(bottomOverlay) {
+    const rows = Array.from(bottomOverlay.querySelectorAll(':scope > .row'));
+    return rows.reverse().find((row) => row.querySelector(':scope > .col > button')) ?? null;
+  }
+
+  // The slot is permanent rather than added only while hidden: a column that
+  // came and went would shift Kavita's own icons on every toggle.
+  function syncMenuToggleButton() {
+    const [bottomOverlay] = findReaderOverlays('fixed-bottom');
+    const row = bottomOverlay ? findReaderMenuIconRow(bottomOverlay) : null;
+
+    if (!row) {
+      menuToggleSlot = null;
+      // A closed menu leaves nothing on screen to clutter, so stay hidden and
+      // wait for it to reopen. Only a layout we cannot read needs the tab.
+      controls.dataset.revealInMenu = bottomOverlay ? 'false' : 'true';
+      return;
+    }
+
+    if (menuToggleSlot?.parentElement !== row) {
+      menuToggleSlot = document.createElement('div');
+      menuToggleSlot.className = 'col d-flex justify-content-center';
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'btn btn-icon';
+      button.addEventListener('click', () => setControlsHidden(!controlsHidden));
+      menuToggleSlot.append(button);
+      row.prepend(menuToggleSlot);
+    }
+
+    updateMenuToggleButton();
+    controls.dataset.revealInMenu = 'true';
+  }
+
+  function updateMenuToggleButton() {
+    const button = menuToggleSlot?.firstElementChild;
+    if (!button) return;
+
+    const action = controlsHidden ? 'Show' : 'Hide';
+    button.setAttribute('aria-label', `${action} auto-scroll controls`);
+    button.setAttribute('aria-pressed', String(controlsHidden));
+    button.title = `${action} auto-scroll controls (${shortcutLabel(SHORTCUTS.hide)})`;
+    button.innerHTML = controlsHidden ? ICONS.eye : ICONS.eyeOff;
+
+    // Scrollito's stylesheet does not reach inside Kavita's DOM, so size the
+    // icon the way Font Awesome sizes its own inline SVGs against its glyphs.
+    // Staying in em keeps it matched to whatever font size the reader uses.
+    const icon = button.querySelector('svg');
+    icon.style.width = 'auto';
+    icon.style.height = '1em';
+    icon.style.verticalAlign = '-0.125em';
+    icon.style.fill = 'currentColor';
   }
 
   function syncReaderMenuOffsets() {
@@ -473,6 +533,7 @@
     const key = shortcutLabel(SHORTCUTS.hide);
     hideToggle.title = `Hide auto-scroll controls (${key})`;
     revealButton.title = `Show auto-scroll controls (${key})`;
+    updateMenuToggleButton();
   }
 
   function setRunning(nextRunning) {
@@ -752,6 +813,9 @@
         background: var(--accent);
       }
       #${CONTROL_ID} .reveal-button { display: none; }
+      /* Kavita's menu is holding the reveal button, so leave the page clean.
+         Without that slot the tab below stays, so hiding is never a dead end. */
+      #${CONTROL_ID}[data-user-hidden="true"][data-reveal-in-menu="true"] { display: none; }
       #${CONTROL_ID}[data-user-hidden="true"] {
         padding: 7px;
         gap: 0;
@@ -890,6 +954,7 @@
     setAutoStart(autoStart);
     setSlipMode(slipMode);
     updateHideButtonLabels();
+    controls.dataset.revealInMenu = 'false';
     syncReaderState();
     observeReaderOverlays();
     syncReaderMenuOffsets();
@@ -1058,6 +1123,7 @@
     // image traffic restart the offset-tracking animation loop.
     if (mutatesReaderOverlay(records)) {
       trackReaderMenuOffsets();
+      syncMenuToggleButton();
     } else if (mutatesInsideReaderOverlay(records)) {
       // The menu is already open and only changed size, and its own slider
       // churns as pages advance, so recompute once rather than restarting the

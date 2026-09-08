@@ -63,6 +63,25 @@
       height: 44px;
     }
 
+    /* Kavita lays the icon row out as Bootstrap columns, which is the hook
+       Scrollito uses to add its reveal button while hidden. */
+    .overlay .col {
+      display: flex;
+      flex: 1 1 0;
+      justify-content: center;
+    }
+
+    .overlay .btn-icon {
+      padding: 4px 8px;
+      border: 0;
+      color: #fff;
+      background: none;
+      font: inherit;
+      /* Kavita sets no size on these, so they inherit Bootstrap's 1rem base. */
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
     .overlay .track {
       flex: 1;
       height: 4px;
@@ -154,9 +173,12 @@
 
         const bottom = document.createElement('div');
         bottom.className = 'fixed-bottom overlay';
+        const icons = ['&raquo;', '&#8597;', '&#10530;', '&#9776;'];
         bottom.innerHTML =
           '<div class="row"><span>1</span><span class="track"></span><span>35</span></div>' +
-          '<div class="row"><span>&#9664;&#9664;</span><span>&#9664;</span><span>&#9654;</span><span>&#9654;&#9654;</span></div>';
+          '<div class="row">' + icons.map((icon) =>
+            `<div class="col d-flex justify-content-center"><button class="btn btn-icon" type="button">${icon}</button></div>`
+          ).join('') + '</div>';
 
         if (settingsOpen) {
           const settings = document.createElement('div');
