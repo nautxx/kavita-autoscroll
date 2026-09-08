@@ -47,6 +47,10 @@
   };
   const injectedConfig = document.currentScript?.dataset ?? {};
   const SPEED_STEP = normalizeSpeedStep(injectedConfig.speedStep);
+  // Same contract as the shortcuts below: a value the reader has toggled wins,
+  // and the injector's data-* value only supplies the starting position.
+  const AUTO_START_DEFAULT = normalizeFlag(injectedConfig.autoStart, false);
+  const SLIP_DEFAULT = normalizeFlag(injectedConfig.slip, false);
   // A stored remap always wins; otherwise the injector's data-* value (if any)
   // is the default, so Docker-injected shortcuts still apply until remapped.
   const SHORTCUTS = loadShortcuts();
@@ -70,8 +74,8 @@
   let running = false;
   let speed = clamp(Number(readStored(STORAGE_KEY)) || DEFAULT_SPEED);
   let position = normalizePosition(readStored(POSITION_STORAGE_KEY));
-  let autoStart = readStored(AUTO_START_STORAGE_KEY) === 'true';
-  let slipMode = readStored(SLIP_STORAGE_KEY) === 'true';
+  let autoStart = readStoredFlag(AUTO_START_STORAGE_KEY, AUTO_START_DEFAULT);
+  let slipMode = readStoredFlag(SLIP_STORAGE_KEY, SLIP_DEFAULT);
   let slipHeld = false;
   let webtoonModeActive = false;
   let controlsHidden = false;
@@ -130,6 +134,20 @@
   function normalizeShortcut(value, fallback) {
     if (typeof value !== 'string' || value.length === 0) return fallback;
     return value.toLocaleLowerCase() === 'space' ? ' ' : value;
+  }
+
+  function normalizeFlag(value, fallback) {
+    if (typeof value !== 'string') return fallback;
+    const normalized = value.trim().toLocaleLowerCase();
+    if (['true', '1', 'yes', 'on'].includes(normalized)) return true;
+    if (['false', '0', 'no', 'off'].includes(normalized)) return false;
+    return fallback;
+  }
+
+  // An unset key means the reader has never touched this toggle, so the
+  // injected default still applies. Once written, even 'false' wins.
+  function readStoredFlag(key, fallback) {
+    return normalizeFlag(readStored(key), fallback);
   }
 
   function normalizeSpeedStep(value) {
