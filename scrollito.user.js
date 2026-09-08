@@ -101,6 +101,7 @@
   let shortcutButtons = {};
   let remappingAction = null;
   let menuToggleSlot = null;
+  let readerMenuLayoutUnsupported = false;
 
   function clamp(value) {
     return Math.min(MAX_SPEED, Math.max(MIN_SPEED, value));
@@ -299,7 +300,14 @@
       if (!shortcutsMenu.hidden) setShortcutsMenu(false, false);
       if (running) setRunning(false);
       syncMenuToggleButton();
-      if (controls.dataset.revealInMenu !== 'true') revealButton.focus({ preventScroll: true });
+      // The control is about to be display:none, so focus has to move off it or
+      // the browser drops it to <body> and the tab order restarts. Hand it to
+      // whichever reveal control is on screen; with the menu closed there is
+      // none, and falling back to the document is then the honest outcome.
+      const menuToggle = controls.dataset.revealInMenu === 'true'
+        ? menuToggleSlot?.firstElementChild
+        : revealButton;
+      menuToggle?.focus({ preventScroll: true });
     } else {
       syncMenuToggleButton();
       revealControls();
@@ -331,11 +339,18 @@
     const [bottomOverlay] = findReaderOverlays('fixed-bottom');
     const row = bottomOverlay ? findReaderMenuIconRow(bottomOverlay) : null;
 
+    // Whether this Kavita can carry the button is a property of its markup, not
+    // of whether a menu happens to be open right now, so remember the answer.
+    // A menu that turns up without a usable row means the tab is needed even
+    // once that menu closes; finding a row again clears it, so a menu caught
+    // mid-render does not strand us on the tab forever.
+    if (bottomOverlay) readerMenuLayoutUnsupported = !row;
+
     if (!row) {
       menuToggleSlot = null;
-      // A closed menu leaves nothing on screen to clutter, so stay hidden and
-      // wait for it to reopen. Only a layout we cannot read needs the tab.
-      controls.dataset.revealInMenu = bottomOverlay ? 'false' : 'true';
+      // With a readable layout a closed menu leaves nothing on screen to
+      // clutter, and reopening it brings the button back.
+      controls.dataset.revealInMenu = readerMenuLayoutUnsupported ? 'false' : 'true';
       return;
     }
 
