@@ -453,9 +453,16 @@
   let trackedReaderOverlays = [];
 
   function observeReaderOverlays() {
-    trackedReaderOverlays = [...findReaderOverlays('fixed-top'), ...findReaderOverlays('fixed-bottom')];
+    const overlays = [...findReaderOverlays('fixed-top'), ...findReaderOverlays('fixed-bottom')];
+    // Resizing fires this far more often than menus open, and re-observing an
+    // unchanged set costs a teardown plus an initial callback per element.
+    const unchanged = overlays.length === trackedReaderOverlays.length &&
+      overlays.every((overlay, index) => overlay === trackedReaderOverlays[index]);
+    if (unchanged) return;
+
+    trackedReaderOverlays = overlays;
     readerOverlayResize.disconnect();
-    for (const overlay of trackedReaderOverlays) readerOverlayResize.observe(overlay);
+    for (const overlay of overlays) readerOverlayResize.observe(overlay);
   }
 
   function setPosition(nextPosition) {
@@ -982,9 +989,12 @@
     setAutoStart(autoStart);
     setSlipMode(slipMode);
     updateHideButtonLabels();
-    controls.dataset.revealInMenu = 'false';
     syncReaderState();
     observeReaderOverlays();
+    // The reader menu can already be open by the time the script runs, and
+    // nothing would mutate an overlay afterwards to prompt us, so claim the
+    // slot now rather than waiting for the menu's next open.
+    syncMenuToggleButton();
     syncReaderMenuOffsets();
   }
 
