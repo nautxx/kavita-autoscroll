@@ -699,38 +699,30 @@
       #${CONTROL_ID} [data-value="top-right"] .corner-preview::after { top: 2px; right: 2px; }
       #${CONTROL_ID} [data-value="bottom-left"] .corner-preview::after { bottom: 2px; left: 2px; }
       #${CONTROL_ID} [data-value="bottom-right"] .corner-preview::after { right: 2px; bottom: 2px; }
-      #${CONTROL_ID} .auto-start-row {
+      /* The menu mirrors with the corner it opens from, so the toggles sit on
+         the outer edge and the divider always faces the position grid. The
+         column holding the hide button stays outermost either way. */
+      #${CONTROL_ID} .menu-columns {
         display: flex;
-        flex-direction: column;
-        gap: 5px;
+        flex-direction: row-reverse;
+        gap: 7px;
         padding-left: 7px;
         border-left: 1px solid rgba(255, 255, 255, .12);
       }
-      #${CONTROL_ID}[data-position$="right"] .auto-start-row {
+      #${CONTROL_ID}[data-position$="right"] .menu-columns {
         order: -1;
+        flex-direction: row;
         padding-left: 0;
         padding-right: 7px;
         border-left: 0;
         border-right: 1px solid rgba(255, 255, 255, .12);
       }
-      #${CONTROL_ID} .hide-column {
+      #${CONTROL_ID} .menu-column {
         display: flex;
         flex-direction: column;
         gap: 5px;
-        padding-left: 7px;
-        border-left: 1px solid rgba(255, 255, 255, .12);
       }
-      #${CONTROL_ID}[data-position$="right"] .hide-column {
-        order: -2;
-        padding-left: 0;
-        padding-right: 7px;
-        border-left: 0;
-        border-right: 1px solid rgba(255, 255, 255, .12);
-      }
-      #${CONTROL_ID} .auto-start-toggle,
-      #${CONTROL_ID} .shortcuts-button,
-      #${CONTROL_ID} .hide-toggle,
-      #${CONTROL_ID} .slip-toggle {
+      #${CONTROL_ID} .menu-column button {
         width: 32px;
         height: 32px;
         min-width: 32px;
@@ -806,13 +798,15 @@
               `;
             }).join('')}
           </div>
-          <div class="auto-start-row">
-            <button class="shortcuts-button" type="button" aria-expanded="false" aria-haspopup="dialog" aria-label="Open keyboard shortcuts" title="Keyboard shortcuts">${ICONS.shortcuts}</button>
-            <button class="auto-start-toggle" type="button" aria-pressed="false" aria-label="Auto-start in Webtoon mode" title="Enable auto-start in Webtoon mode">${ICONS.autoStart}</button>
-          </div>
-          <div class="hide-column">
-            <button class="hide-toggle" type="button" aria-label="Hide auto-scroll controls" title="Hide auto-scroll controls">${ICONS.eye}</button>
-            <button class="slip-toggle" type="button" aria-pressed="false" aria-label="Slip mode" title="Enable slip mode (keep scrolling after a manual scroll)">${ICONS.slip}</button>
+          <div class="menu-columns">
+            <div class="menu-column">
+              <button class="hide-toggle" type="button" aria-label="Hide auto-scroll controls" title="Hide auto-scroll controls">${ICONS.eye}</button>
+              <button class="shortcuts-button" type="button" aria-expanded="false" aria-haspopup="dialog" aria-label="Open keyboard shortcuts" title="Keyboard shortcuts">${ICONS.shortcuts}</button>
+            </div>
+            <div class="menu-column">
+              <button class="auto-start-toggle" type="button" aria-pressed="false" aria-label="Auto-start in Webtoon mode" title="Enable auto-start in Webtoon mode">${ICONS.autoStart}</button>
+              <button class="slip-toggle" type="button" aria-pressed="false" aria-label="Slip mode" title="Enable slip mode (keep scrolling after a manual scroll)">${ICONS.slip}</button>
+            </div>
           </div>
         </div>
         <div class="shortcuts-menu" role="dialog" aria-label="Keyboard shortcuts" hidden>
