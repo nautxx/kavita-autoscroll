@@ -27,6 +27,8 @@ Docker injector can place the same script into Kavita's HTML at the server.
   to bring it back
 - Moves out of the way when Kavita's reader menu opens
 - Pauses when you scroll, click, or touch outside the control
+- Scrub mode keeps the set pace through a manual scroll, so you can swipe
+  ahead or back up a little without stopping
 - Remembers the selected speed in the browser
 - Handles Kavita's normal and fullscreen Webtoon readers
 - Supports Kavita installations hosted at custom domains or base paths
@@ -159,7 +161,13 @@ container after editing `.env`.
   (`S`, `[`, `]`, or `A`) and press any key to reassign it, or `Escape` to
   cancel. Remapped shortcuts are remembered in that browser and take
   priority over the Docker injector's configured keys.
-- Scrolling, clicking, or touching outside the control pauses auto-scroll.
+- In settings, select the up-and-down arrows icon to turn on **scrub mode**.
+  Scrolling then seeks instead of stopping: swipe ahead, swipe back, or spin
+  the wheel, and auto-scroll carries on at the set speed from wherever you
+  land. It holds still while a finger is down and picks up again when you lift
+  it. Use the pause icon or `S` to stop while scrub mode is on.
+- Scrolling, clicking, or touching outside the control pauses auto-scroll,
+  unless scrub mode is on.
 - While auto-scroll is running, the controls fade away after 2.5 seconds of
   inactivity. Move the pointer, touch the page, or use the keyboard to reveal
   them. The controls remain visible while paused.
@@ -177,9 +185,9 @@ matched pages.
 
 The script does not read credentials, call Kavita APIs, send data, or load
 remote code. Its only stored values are the scrolling speed, preferred control
-corner, auto-start preference, and any remapped keyboard shortcuts, all in
-that site's local browser storage. Review the complete source in
-[`scrollito.user.js`](./scrollito.user.js).
+corner, auto-start and scrub-mode preferences, and any remapped keyboard
+shortcuts, all in that site's local browser storage. Review the complete
+source in [`scrollito.user.js`](./scrollito.user.js).
 
 ## Browser support
 

@@ -23,6 +23,7 @@
   const STORAGE_KEY = 'scrollito.speed';
   const POSITION_STORAGE_KEY = 'scrollito.position';
   const AUTO_START_STORAGE_KEY = 'scrollito.auto-start';
+  const SCRUB_STORAGE_KEY = 'scrollito.scrub';
   const SHORTCUTS_STORAGE_KEY = 'scrollito.shortcuts';
   const DEFAULT_SPEED = 100;
   const MIN_SPEED = 25;
@@ -58,6 +59,7 @@
     autoStart: '<svg viewBox="0 0 448 512" aria-hidden="true"><path d="M338.8-9.9c11.9 8.6 16.3 24.2 10.9 37.8L271.3 224 416 224c13.5 0 25.5 8.4 30.1 21.1s.7 26.9-9.6 35.5l-288 240c-11.3 9.4-27.4 9.9-39.3 1.3s-16.3-24.2-10.9-37.8L176.7 288 32 288c-13.5 0-25.5-8.4-30.1-21.1s-.7-26.9 9.6-35.5l288-240c11.3-9.4 27.4-9.9 39.3-1.3z"/></svg>',
     shortcuts: '<svg viewBox="0 0 576 512" aria-hidden="true"><path d="M64 64C28.7 64 0 92.7 0 128L0 384c0 35.3 28.7 64 64 64l448 0c35.3 0 64-28.7 64-64l0-256c0-35.3-28.7-64-64-64L64 64zm16 64l32 0c8.8 0 16 7.2 16 16l0 32c0 8.8-7.2 16-16 16l-32 0c-8.8 0-16-7.2-16-16l0-32c0-8.8 7.2-16 16-16zM64 240c0-8.8 7.2-16 16-16l32 0c8.8 0 16 7.2 16 16l0 32c0 8.8-7.2 16-16 16l-32 0c-8.8 0-16-7.2-16-16l0-32zM176 128l32 0c8.8 0 16 7.2 16 16l0 32c0 8.8-7.2 16-16 16l-32 0c-8.8 0-16-7.2-16-16l0-32c0-8.8 7.2-16 16-16zM160 240c0-8.8 7.2-16 16-16l32 0c8.8 0 16 7.2 16 16l0 32c0 8.8-7.2 16-16 16l-32 0c-8.8 0-16-7.2-16-16l0-32zm16 80l224 0c8.8 0 16 7.2 16 16l0 32c0 8.8-7.2 16-16 16l-224 0c-8.8 0-16-7.2-16-16l0-32c0-8.8 7.2-16 16-16zm80-176c0-8.8 7.2-16 16-16l32 0c8.8 0 16 7.2 16 16l0 32c0 8.8-7.2 16-16 16l-32 0c-8.8 0-16-7.2-16-16l0-32zm16 80l32 0c8.8 0 16 7.2 16 16l0 32c0 8.8-7.2 16-16 16l-32 0c-8.8 0-16-7.2-16-16l0-32c0-8.8 7.2-16 16-16zm80-80c0-8.8 7.2-16 16-16l32 0c8.8 0 16 7.2 16 16l0 32c0 8.8-7.2 16-16 16l-32 0c-8.8 0-16-7.2-16-16l0-32zm16 80l32 0c8.8 0 16 7.2 16 16l0 32c0 8.8-7.2 16-16 16l-32 0c-8.8 0-16-7.2-16-16l0-32c0-8.8 7.2-16 16-16zm80-80c0-8.8 7.2-16 16-16l32 0c8.8 0 16 7.2 16 16l0 32c0 8.8-7.2 16-16 16l-32 0c-8.8 0-16-7.2-16-16l0-32zm16 80l32 0c8.8 0 16 7.2 16 16l0 32c0 8.8-7.2 16-16 16l-32 0c-8.8 0-16-7.2-16-16l0-32c0-8.8 7.2-16 16-16z"/></svg>',
     eye: '<svg viewBox="0 0 576 512" aria-hidden="true"><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6-46.8 43.5-78.1 95.4-93 131.1-3.3 7.9-3.3 16.7 0 24.6 14.9 35.7 46.2 87.7 93 131.1 47.1 43.7 111.8 80.6 192.6 80.6s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1 3.3-7.9 3.3-16.7 0-24.6-14.9-35.7-46.2-87.7-93-131.1-47.1-43.7-111.8-80.6-192.6-80.6zM144 256a144 144 0 1 1 288 0 144 144 0 1 1 -288 0zm144-64c0 35.3-28.7 64-64 64-11.5 0-22.3-3-31.7-8.4-1 10.9-.1 22.1 2.9 33.2 13.7 51.2 66.4 81.6 117.6 67.9s81.6-66.4 67.9-117.6c-12.2-45.7-55.5-74.8-101.1-70.8 5.3 9.3 8.4 20.1 8.4 31.7z"/></svg>',
+    scrub: '<svg viewBox="0 0 320 512" aria-hidden="true"><path d="M182.6 9.4c-12.5-12.5-32.8-12.5-45.3 0l-96 96c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L128 109.3l0 293.5-41.4-41.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l96 96c12.5 12.5 32.8 12.5 45.3 0l96-96c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 402.7l0-293.5 41.4 41.4c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3l-96-96z"/></svg>',
     eyeOff: '<svg viewBox="0 0 576 512" aria-hidden="true"><path d="M41-24.9c-9.4-9.4-24.6-9.4-33.9 0S-2.3-.3 7 9.1l528 528c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-96.4-96.4c2.7-2.4 5.4-4.8 8-7.2 46.8-43.5 78.1-95.4 93-131.1 3.3-7.9 3.3-16.7 0-24.6-14.9-35.7-46.2-87.7-93-131.1-47.1-43.7-111.8-80.6-192.6-80.6-56.8 0-105.6 18.2-146 44.2L41-24.9zM204.5 138.7c23.5-16.8 52.4-26.7 83.5-26.7 79.5 0 144 64.5 144 144 0 31.1-9.9 59.9-26.7 83.5l-34.7-34.7c12.7-21.4 17-47.7 10.1-73.7-13.7-51.2-66.4-81.6-117.6-67.9-8.6 2.3-16.7 5.7-24 10l-34.7-34.7zM325.3 395.1c-11.9 3.2-24.4 4.9-37.3 4.9-79.5 0-144-64.5-144-144 0-12.9 1.7-25.4 4.9-37.3L69.4 139.2c-32.6 36.8-55 75.8-66.9 104.5-3.3 7.9-3.3 16.7 0 24.6 14.9 35.7 46.2 87.7 93 131.1 47.1 43.7 111.8 80.6 192.6 80.6 37.3 0 71.2-7.9 101.5-20.6l-64.2-64.2z"/></svg>',
   };
 
@@ -68,6 +70,8 @@
   let speed = clamp(Number(readStored(STORAGE_KEY)) || DEFAULT_SPEED);
   let position = normalizePosition(readStored(POSITION_STORAGE_KEY));
   let autoStart = readStored(AUTO_START_STORAGE_KEY) === 'true';
+  let scrubMode = readStored(SCRUB_STORAGE_KEY) === 'true';
+  let scrubHeld = false;
   let webtoonModeActive = false;
   let controlsHidden = false;
   let animationFrame = 0;
@@ -88,6 +92,7 @@
   let positionMenu;
   let positionOptions;
   let autoStartToggle;
+  let scrubToggle;
   let shortcutsButton;
   let shortcutsMenu;
   let hideToggle;
@@ -232,6 +237,15 @@
   function tick(now) {
     if (!running) return;
 
+    // Scrub mode keeps running through a manual gesture, but advancing while a
+    // finger is still down would fight the drag, so hold the clock — and the
+    // pace with it — until the pointer lifts.
+    if (scrubHeld) {
+      previousTime = now;
+      animationFrame = requestAnimationFrame(tick);
+      return;
+    }
+
     if (!previousTime) previousTime = now;
     const elapsedSeconds = Math.min((now - previousTime) / 1000, 0.1);
     previousTime = now;
@@ -358,6 +372,14 @@
     if (autoStart && isWebtoonModeActive() && !running) setRunning(true);
   }
 
+  function setScrubMode(enabled) {
+    scrubMode = Boolean(enabled);
+    scrubHeld = false;
+    scrubToggle.setAttribute('aria-pressed', String(scrubMode));
+    scrubToggle.title = `${scrubMode ? 'Disable' : 'Enable'} scrub mode (keep scrolling after a manual scroll)`;
+    writeStored(SCRUB_STORAGE_KEY, String(scrubMode));
+  }
+
   function setPositionMenu(open, restoreFocus = true) {
     positionMenu.hidden = !open;
     positionButton.setAttribute('aria-expanded', String(open));
@@ -437,6 +459,7 @@
     running = nextRunning && isWebtoonModeActive();
     previousTime = 0;
     fractionalDistance = 0;
+    scrubHeld = false;
     toggleButton.innerHTML = running ? ICONS.pause : ICONS.play;
     updateToggleButtonLabel();
     toggleButton.setAttribute('aria-pressed', String(running));
@@ -691,6 +714,9 @@
         border-right: 1px solid rgba(255, 255, 255, .12);
       }
       #${CONTROL_ID} .hide-column {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
         padding-left: 7px;
         border-left: 1px solid rgba(255, 255, 255, .12);
       }
@@ -703,12 +729,14 @@
       }
       #${CONTROL_ID} .auto-start-toggle,
       #${CONTROL_ID} .shortcuts-button,
-      #${CONTROL_ID} .hide-toggle {
+      #${CONTROL_ID} .hide-toggle,
+      #${CONTROL_ID} .scrub-toggle {
         width: 32px;
         height: 32px;
         min-width: 32px;
       }
-      #${CONTROL_ID} .auto-start-toggle[aria-pressed="true"] {
+      #${CONTROL_ID} .auto-start-toggle[aria-pressed="true"],
+      #${CONTROL_ID} .scrub-toggle[aria-pressed="true"] {
         background: var(--accent);
       }
       #${CONTROL_ID} .reveal-button { display: none; }
@@ -784,6 +812,7 @@
           </div>
           <div class="hide-column">
             <button class="hide-toggle" type="button" aria-label="Hide auto-scroll controls" title="Hide auto-scroll controls">${ICONS.eye}</button>
+            <button class="scrub-toggle" type="button" aria-pressed="false" aria-label="Scrub mode" title="Enable scrub mode (keep scrolling after a manual scroll)">${ICONS.scrub}</button>
           </div>
         </div>
         <div class="shortcuts-menu" role="dialog" aria-label="Keyboard shortcuts" hidden>
@@ -805,6 +834,7 @@
     positionMenu = controls.querySelector('.position-menu');
     positionOptions = controls.querySelectorAll('.position-option');
     autoStartToggle = controls.querySelector('.auto-start-toggle');
+    scrubToggle = controls.querySelector('.scrub-toggle');
     shortcutsButton = controls.querySelector('.shortcuts-button');
     shortcutsMenu = controls.querySelector('.shortcuts-menu');
     hideToggle = controls.querySelector('.hide-toggle');
@@ -832,6 +862,7 @@
     controls.addEventListener('focusout', scheduleAutoHide);
     positionButton.addEventListener('click', () => setPositionMenu(positionMenu.hidden));
     autoStartToggle.addEventListener('click', () => setAutoStart(!autoStart));
+    scrubToggle.addEventListener('click', () => setScrubMode(!scrubMode));
     hideToggle.addEventListener('click', () => setControlsHidden(true));
     revealButton.addEventListener('click', () => setControlsHidden(false));
     positionOptions.forEach((option) => {
@@ -843,6 +874,7 @@
     setSpeed(speed);
     setPosition(position);
     setAutoStart(autoStart);
+    setScrubMode(scrubMode);
     updateHideButtonLabels();
     syncReaderState();
     syncReaderMenuOffsets();
@@ -867,15 +899,48 @@
     if (outsideControls && !positionMenu.hidden) setPositionMenu(false, false);
     if (outsideControls && !shortcutsMenu.hidden) setShortcutsMenu(false, false);
     if (!running || !outsideControls) return;
+    // Scrub mode reads a manual scroll as a seek rather than a stop: the pace
+    // resumes from wherever the gesture left the page.
+    if (scrubMode) return;
     setRunning(false);
   }
 
+  function holdForScrub(event) {
+    if (scrubMode && running && !controls.contains(event.target)) scrubHeld = true;
+  }
+
+  function releaseTouchScrubHold(event) {
+    if (event.touches.length === 0) scrubHeld = false;
+  }
+
+  function holdMouseForScrub(event) {
+    if (event.pointerType === 'mouse') holdForScrub(event);
+  }
+
+  function releaseMouseScrubHold(event) {
+    if (event.pointerType === 'mouse') scrubHeld = false;
+  }
+
   document.addEventListener('pointermove', (event) => {
-    if (event.pointerType === 'mouse') revealControls();
+    if (event.pointerType !== 'mouse') return;
+    // A button released outside the window never delivers pointerup, so treat
+    // any buttonless move as the end of a mouse-driven scrub hold.
+    if (scrubHeld && event.buttons === 0) scrubHeld = false;
+    revealControls();
   }, { passive: true });
   document.addEventListener('wheel', pauseForManualInput, { passive: true, capture: true });
   document.addEventListener('touchstart', pauseForManualInput, { passive: true, capture: true });
   document.addEventListener('pointerdown', pauseForManualInput, { passive: true, capture: true });
+  // Touch holds run off touch events, not pointer ones: Safari cancels the
+  // pointer as soon as it takes the gesture over for native scrolling, which is
+  // exactly the stretch the hold has to cover. Mice keep the pointer stream, so
+  // a drag on a scrollbar holds too.
+  document.addEventListener('touchstart', holdForScrub, { passive: true, capture: true });
+  document.addEventListener('touchend', releaseTouchScrubHold, { passive: true, capture: true });
+  document.addEventListener('touchcancel', releaseTouchScrubHold, { passive: true, capture: true });
+  document.addEventListener('pointerdown', holdMouseForScrub, { passive: true, capture: true });
+  document.addEventListener('pointerup', releaseMouseScrubHold, { passive: true, capture: true });
+  document.addEventListener('pointercancel', releaseMouseScrubHold, { passive: true, capture: true });
   document.addEventListener('scroll', (event) => {
     if (running && performance.now() - lastAutomaticScroll > 150) pauseForManualInput(event);
   }, { passive: true, capture: true });
