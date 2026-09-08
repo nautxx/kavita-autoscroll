@@ -22,9 +22,9 @@ Docker injector can place the same script into Kavita's HTML at the server.
 - Can be placed in any screen corner and remembers the selection
 - Keyboard shortcuts can be remapped from the settings menu and are
   remembered per browser
-- A hide button (or keyboard shortcut) hides the control and stops
-  scrolling when you want to scroll manually, leaving a small tap target
-  to bring it back
+- A hide button — in Scrollito's settings, in Kavita's own reader menu, or a
+  keyboard shortcut — stops scrolling when you want to scroll manually and
+  leaves nothing over the page
 - Moves out of the way when Kavita's reader menu opens
 - Pauses when you scroll, click, or touch outside the control
 - Slip mode keeps the set pace through a manual scroll, so you can swipe
@@ -154,9 +154,13 @@ container after editing `.env`.
   controls to any corner or enable **Auto-start in Webtoon mode**.
 - Press `S` to toggle scrolling on a hardware keyboard.
 - Press `[` or `]` to decrease or increase speed.
-- Press `A`, or select the eye icon in settings, to hide the control and stop
-  scrolling, such as when you want to scroll manually. A small tab stays in
-  that corner — tap or press `A` again to bring the control back.
+- Select the eye icon in settings or at the left of Kavita's reader menu, or
+  press `A`, to hide the control and stop scrolling, such as when you want to
+  scroll manually. Nothing is left over the page — select the eye in Kavita's
+  menu again, or press `A`, to bring the control back. That icon stays in the
+  menu whether the control is showing or hidden, so Kavita's own icons never
+  shift. On a Kavita whose menu layout is not recognized, a small tab stays in
+  the corner instead.
 - In settings, select the keyboard icon to remap shortcuts. Select a key
   (`S`, `[`, `]`, or `A`) and press any key to reassign it, or `Escape` to
   cancel. Remapped shortcuts are remembered in that browser and take
