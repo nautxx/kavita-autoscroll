@@ -811,6 +811,11 @@
         flex-direction: column;
         gap: 5px;
       }
+      /* The menu opens downward from a top corner, so flip each column to keep
+         the same pair sitting against the pill from either side. */
+      #${CONTROL_ID}[data-position^="top"] .menu-column {
+        flex-direction: column-reverse;
+      }
       #${CONTROL_ID} .menu-column button {
         width: 32px;
         height: 32px;
