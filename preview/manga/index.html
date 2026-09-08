@@ -22,6 +22,102 @@
       width: 100%;
       height: 100%;
     }
+
+    /* Stand-ins for Kavita's reader chrome. The real reader renders these as
+       direct children of .reader, which is where Scrollito looks for them. */
+    .overlay {
+      position: fixed;
+      right: 0;
+      left: 0;
+      padding: 8px 12px;
+      color: #fff;
+      background: rgba(38, 38, 40, .82);
+      font: 500 13px/1.4 -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+
+    .fixed-top {
+      top: 0;
+      animation: slide-in-top 250ms ease;
+    }
+
+    .fixed-bottom {
+      bottom: 0;
+      animation: slide-in-bottom 250ms ease;
+    }
+
+    @keyframes slide-in-top {
+      from { transform: translateY(-100%); }
+    }
+
+    @keyframes slide-in-bottom {
+      from { transform: translateY(100%); }
+    }
+
+    .overlay .row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      height: 44px;
+    }
+
+    .overlay .track {
+      flex: 1;
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .35);
+    }
+
+    /* Kavita renders its settings pane as a .bottom-menu inside the bottom
+       overlay, with no animation — the case that grows the menu in place. */
+    .bottom-menu {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      padding: 10px 2px 18px;
+      border-top: 1px solid rgba(255, 255, 255, .18);
+    }
+
+    .bottom-menu div {
+      height: 46px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, .16);
+    }
+
+    .harness {
+      position: fixed;
+      top: 50%;
+      left: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transform: translateY(-50%);
+      font: 500 12px/1 -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    }
+
+    .harness button {
+      padding: 7px 10px;
+      border: 1px solid #d0d0d5;
+      border-radius: 8px;
+      background: #fff;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .harness button[aria-pressed="true"] {
+      border-color: #0a84ff;
+      color: #fff;
+      background: #0a84ff;
+    }
+
+    .harness p {
+      max-width: 150px;
+      margin: 2px 0 0;
+      color: #6b6b70;
+      line-height: 1.4;
+    }
   </style>
 </head>
 
@@ -34,7 +130,100 @@
     </div>
   </main>
 
+  <div class="harness">
+    <button type="button" data-action="menu" aria-pressed="false">Reader menu (M)</button>
+    <button type="button" data-action="settings" aria-pressed="false">Settings pane (X)</button>
+    <p>Scrollito should clear both, and lift again when the settings pane opens.</p>
+  </div>
+
   <script src="/scrollito.user.js"></script>
+  <script>
+    (() => {
+      const reader = document.querySelector('.reader');
+      const buttons = document.querySelectorAll('.harness button');
+      let menuOpen = false;
+      let settingsOpen = false;
+
+      function renderMenu() {
+        reader.querySelectorAll('.overlay').forEach((overlay) => overlay.remove());
+        if (!menuOpen) return;
+
+        const top = document.createElement('div');
+        top.className = 'fixed-top overlay';
+        top.innerHTML = '<div class="row">Sample Series &mdash; Chapter 2</div>';
+
+        const bottom = document.createElement('div');
+        bottom.className = 'fixed-bottom overlay';
+        bottom.innerHTML =
+          '<div class="row"><span>1</span><span class="track"></span><span>35</span></div>' +
+          '<div class="row"><span>&#9664;&#9664;</span><span>&#9664;</span><span>&#9654;</span><span>&#9654;&#9654;</span></div>';
+
+        if (settingsOpen) {
+          const settings = document.createElement('div');
+          settings.className = 'bottom-menu';
+          settings.innerHTML = '<div></div><div></div><div></div><div></div><div></div><div></div>';
+          bottom.append(settings);
+        }
+
+        reader.append(top, bottom);
+      }
+
+      function sync() {
+        renderMenu();
+        buttons.forEach((button) => {
+          const pressed = button.dataset.action === 'menu' ? menuOpen : settingsOpen;
+          button.setAttribute('aria-pressed', String(pressed));
+        });
+      }
+
+      function toggle(action) {
+        if (action === 'menu') {
+          menuOpen = !menuOpen;
+          if (!menuOpen) settingsOpen = false;
+        } else {
+          settingsOpen = !settingsOpen;
+          // Kavita's settings button lives in the bottom bar, so the pane can
+          // only be open while the menu is.
+          if (settingsOpen) menuOpen = true;
+        }
+        sync();
+      }
+
+      buttons.forEach((button) => {
+        button.addEventListener('click', () => {
+          toggle(button.dataset.action);
+          button.blur();
+        });
+      });
+
+      document.addEventListener('keydown', (event) => {
+        if (event.ctrlKey || event.metaKey || event.altKey) return;
+        const key = event.key.toLowerCase();
+        if (key === 'm') toggle('menu');
+        else if (key === 'x') toggle('settings');
+      });
+
+      // Reload when either preview source changes, so editing the userscript or
+      // this page refreshes the tab without a watcher or a build step.
+      const sources = ['/scrollito.user.js', location.pathname];
+      const stamps = new Map();
+      setInterval(async () => {
+        for (const source of sources) {
+          try {
+            const response = await fetch(source, { method: 'HEAD', cache: 'no-store' });
+            const stamp = response.headers.get('last-modified');
+            if (!stamp) continue;
+            if (stamps.has(source) && stamps.get(source) !== stamp) return location.reload();
+            stamps.set(source, stamp);
+          } catch {
+            // The preview server went away; keep polling until it returns.
+          }
+        }
+      }, 1000);
+
+      sync();
+    })();
+  </script>
 </body>
 
 </html>
