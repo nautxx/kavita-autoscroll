@@ -996,17 +996,30 @@
         #${CONTROL_ID}, #${CONTROL_ID} button { transition: none; }
       }
       /* The only rules that reach outside the control, and they only apply
-         while the marker is on <html>. -webkit-touch-callout inherits, so the
-         containers cover the pages without the script having to know Kavita's
-         image class; -webkit-user-drag does not, and is what lets a long press
-         lift an image out of the page on iPad, so it needs the images. */
+         while the marker is on <html>. touch-callout and user-select both
+         inherit, so the containers cover the pages without the script having to
+         know Kavita's image class; -webkit-user-drag does not, and is what lets
+         a long press lift an image out of the page on iPad, so it needs the
+         images. user-select is what gates Live Text: WebKit offers the lettering
+         inside a manga page as selectable text, and the loupe comes with it. */
       [${CALLOUT_MARKER}] .reader,
       [${CALLOUT_MARKER}] app-infinite-scroller {
         -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
       }
       [${CALLOUT_MARKER}] .reader img,
       [${CALLOUT_MARKER}] app-infinite-scroller img {
         -webkit-user-drag: none;
+      }
+      /* Kavita's bottom bar lives inside .reader and can be opened mid-scroll,
+         so keep its fields typable. A UA rule on the control itself likely wins
+         over the inherited none already; this makes that independent of how the
+         UA sheet resolves. */
+      [${CALLOUT_MARKER}] .reader input,
+      [${CALLOUT_MARKER}] .reader textarea {
+        -webkit-user-select: auto;
+        user-select: auto;
       }
     `;
     document.head.append(style);
