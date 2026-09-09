@@ -36,6 +36,8 @@
   const SCROLL_CONTAINER_TTL = 250;
   const MOMENTUM_SETTLE_DELAY = 120;
   const LONG_PRESS_DELAY = 300;
+  const EXTERNAL_SCROLL_TOLERANCE = 0.25;
+  const EXTERNAL_WATCH_DURATION = 1200;
   const READER_ROUTE = /\/manga(?:\/|$)/i;
   const CONTROL_ID = 'scrollito';
   const POSITIONS = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
@@ -94,6 +96,8 @@
   let calloutHeld = false;
   let touchStartedAt = 0;
   let swallowNextClick = false;
+  let expectedPosition = null;
+  let externalWatchUntil = 0;
   let cachedScrollContainer = null;
   let cachedInfiniteScroller = null;
   let scrollWriter = null;
@@ -275,11 +279,19 @@
     },
   ];
 
+  // Reads through whichever representation is currently driving, so a caller
+  // can tell the page it left behind from the one it comes back to.
+  function readScrollPosition(element) {
+    if (element !== document.body) return element.scrollTop;
+    return scrollWriter ? scrollWriter.read() : null;
+  }
+
+  // Returns where the page ended up, or null if nothing would move.
   function scrollByPixels(element, pixels, now) {
     lastAutomaticScroll = now;
     if (element !== document.body) {
       element.scrollTop += pixels;
-      return;
+      return element.scrollTop;
     }
 
     // Whichever representation won last frame almost always wins again, so
@@ -289,18 +301,21 @@
     if (scrollWriter) {
       const before = scrollWriter.read();
       scrollWriter.write(pixels);
-      if (scrollWriter.read() !== before) return;
+      const after = scrollWriter.read();
+      if (after !== before) return after;
     }
 
     for (const writer of SCROLL_WRITERS) {
       if (writer === scrollWriter) continue;
       const before = writer.read();
       writer.write(pixels);
-      if (writer.read() !== before) {
+      const after = writer.read();
+      if (after !== before) {
         scrollWriter = writer;
-        return;
+        return after;
       }
     }
+    return null;
   }
 
   // True while the page is under someone else's control: a finger is down, or
@@ -322,8 +337,37 @@
     // needs no separate reset.
     if (slipMode && isPageMoving(now)) {
       previousTime = now;
+      // Keep watching through the hold, so the frame it expires on is compared
+      // against the one before it rather than against a stale write. Without
+      // this, every settle window ends in one blind write — which is most of
+      // what is left of the jitter.
+      expectedPosition = now < externalWatchUntil
+        ? readScrollPosition(findScrollContainer(now))
+        : null;
       animationFrame = requestAnimationFrame(tick);
       return;
+    }
+
+    // Quiet scroll events are only evidence that momentum ended, not proof: iOS
+    // can deliver its last frames sub-pixel, below the threshold that fires an
+    // event, and those land after the settle window has closed. So for a second
+    // after a gesture, check the page is still where we left it and yield to
+    // anything that moved it. After a swipe back that movement runs opposite to
+    // the way we scroll, which is why the tail of an upward flick is the worst
+    // of it. Bounded to the window after a gesture: a false positive there
+    // costs a moment of stillness, never a stall.
+    if (now < externalWatchUntil && expectedPosition !== null) {
+      const position = readScrollPosition(findScrollContainer(now));
+      if (position !== null &&
+        Math.abs(position - expectedPosition) > EXTERNAL_SCROLL_TOLERANCE) {
+        momentumSettlesAt = now + MOMENTUM_SETTLE_DELAY;
+        expectedPosition = null;
+        // Before the clock advances, so yielding costs no accumulated distance
+        // and the page cannot jump when it comes back.
+        previousTime = now;
+        animationFrame = requestAnimationFrame(tick);
+        return;
+      }
     }
 
     if (!previousTime) previousTime = now;
@@ -335,7 +379,7 @@
     if (wholePixels > 0) {
       fractionalDistance -= wholePixels;
       const scrollContainer = findScrollContainer(now);
-      scrollByPixels(scrollContainer, wholePixels, now);
+      expectedPosition = scrollByPixels(scrollContainer, wholePixels, now);
     }
 
     animationFrame = requestAnimationFrame(tick);
@@ -685,6 +729,7 @@
     running = nextRunning && isWebtoonModeActive();
     previousTime = 0;
     fractionalDistance = 0;
+    expectedPosition = null;
     toggleButton.innerHTML = running ? ICONS.pause : ICONS.play;
     updateToggleButtonLabel();
     toggleButton.setAttribute('aria-pressed', String(running));
@@ -1187,6 +1232,7 @@
     // and the click that Kavita acts on only arrives afterwards.
     swallowNextClick = calloutHeld &&
       performance.now() - touchStartedAt >= LONG_PRESS_DELAY;
+    externalWatchUntil = performance.now() + EXTERNAL_WATCH_DURATION;
     endGesture();
   }
 
