@@ -1,4 +1,4 @@
-# Scrollito: auto-scroll for Kavita
+# Scrollito: Auto-scroll for Kavita
 
 Adjustable, pausable auto-scrolling for
 [Kavita](https://www.kavitareader.com/)'s Webtoon reader.
@@ -28,6 +28,10 @@ Docker injector can place the same script into Kavita's HTML at the server.
   leaves nothing over the page
 - Moves out of the way when Kavita's reader menu opens
 - Pauses when you scroll, click, or touch outside the control
+- On iPhone and iPad, holding a finger down to pause keeps iOS's
+  save-image menu and text magnifier out of the way, and leaves Kavita's
+  tap-to-open reader menu closed; all three behave normally again once
+  scrolling stops
 - Slip mode keeps the set pace through a manual scroll, so you can swipe
   ahead or back up a little without stopping
 - Remembers the selected speed in the browser
