@@ -35,6 +35,7 @@
   const READER_MENU_TRACK_DURATION = 350;
   const SCROLL_CONTAINER_TTL = 250;
   const MOMENTUM_SETTLE_DELAY = 120;
+  const LONG_PRESS_DELAY = 400;
   const READER_ROUTE = /\/manga(?:\/|$)/i;
   const CONTROL_ID = 'scrollito';
   const POSITIONS = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
@@ -91,6 +92,8 @@
   let lastAutomaticScroll = 0;
   let momentumSettlesAt = 0;
   let calloutHeld = false;
+  let touchStartedAt = 0;
+  let swallowNextClick = false;
   let cachedScrollContainer = null;
   let cachedInfiniteScroller = null;
   let scrollWriter = null;
@@ -213,6 +216,15 @@
       cachedInfiniteScroller = document.querySelector('app-infinite-scroller');
     }
     return Boolean(cachedInfiniteScroller);
+  }
+
+  // Anything the reader itself would act on, which a long press has no business
+  // swallowing. Kavita's tap-to-menu is bound to the page, not to these.
+  const INTERACTIVE_SELECTOR =
+    'a, button, input, select, textarea, label, [role="button"], [contenteditable]';
+
+  function isInteractiveTarget(target) {
+    return target instanceof Element && Boolean(target.closest(INTERACTIVE_SELECTOR));
   }
 
   function isEditableTarget(target) {
@@ -1170,7 +1182,12 @@
   }
 
   function endTouchGesture(event) {
-    if (event.touches.length === 0) endGesture();
+    if (event.touches.length !== 0) return;
+    // Decided here rather than in the click handler: touchend clears the latch,
+    // and the click that Kavita acts on only arrives afterwards.
+    swallowNextClick = calloutHeld &&
+      performance.now() - touchStartedAt >= LONG_PRESS_DELAY;
+    endGesture();
   }
 
   function endMouseGesture(event) {
@@ -1192,10 +1209,31 @@
   // exactly the stretch slip mode has to cover. Mice keep the pointer stream,
   // so a drag on a scrollbar counts too.
   document.addEventListener('touchstart', (event) => {
+    touchStartedAt = performance.now();
+    // A gesture that never produced a click — a scroll, a cancel — must not
+    // leave the flag armed for whatever is tapped next.
+    swallowNextClick = false;
     // Before pauseForManualInput, which is what clears `running`.
     beginGesture(event);
     pauseForManualInput(event);
   }, CAPTURE_PASSIVE);
+  // Kavita toggles its reader menu on a tap anywhere in the page, which collides
+  // with holding a finger down to pause: the press pauses, and the release drops
+  // the menu over what you were reading. A tap is short by definition, so only
+  // the long ones are swallowed — and only for a press that began while
+  // Scrollito was driving, so a stopped or hidden control leaves Kavita's own
+  // behavior exactly as it was. Capture, because the point is to get there
+  // first; not passive, because preventDefault is half the job.
+  document.addEventListener('click', (event) => {
+    if (!swallowNextClick) return;
+    swallowNextClick = false;
+    if (controls.contains(event.target) || isInteractiveTarget(event.target)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    // Kavita may well have bound this on document too, and a later listener on
+    // the same node outlives a plain stopPropagation.
+    event.stopImmediatePropagation();
+  }, { capture: true });
   document.addEventListener('touchend', endTouchGesture, CAPTURE_PASSIVE);
   document.addEventListener('touchcancel', endTouchGesture, CAPTURE_PASSIVE);
   document.addEventListener('pointerdown', (event) => {
