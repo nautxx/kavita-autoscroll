@@ -33,6 +33,7 @@
   const READER_MENU_GAP = 8;
   const READER_MENU_TRACK_DURATION = 350;
   const SCROLL_CONTAINER_TTL = 250;
+  const MOMENTUM_SETTLE_DELAY = 120;
   const READER_ROUTE = /\/manga(?:\/|$)/i;
   const CONTROL_ID = 'scrollito';
   const POSITIONS = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
@@ -87,6 +88,7 @@
   let previousTime = 0;
   let fractionalDistance = 0;
   let lastAutomaticScroll = 0;
+  let momentumSettlesAt = 0;
   let cachedScrollContainer = null;
   let cachedInfiniteScroller = null;
   let scrollWriter = null;
@@ -287,15 +289,24 @@
     }
   }
 
+  // True while the page is under someone else's control: a finger is down, or
+  // iOS is still running its own momentum after one lifted. Writing scrollTop
+  // during either fights whoever owns the position — a momentum step lands on
+  // the next frame and discards ours — which shows up as jitter at the tail of
+  // a throw, where the two step sizes finally match.
+  function isPageMoving(now) {
+    return gestureActive || now < momentumSettlesAt;
+  }
+
   function tick(now) {
     if (!running) return;
 
-    // Slip mode keeps running through a manual gesture, but advancing while a
-    // finger is still down would fight the drag, so hold the clock — and the
-    // pace with it — until the pointer lifts. Derived here rather than latched
-    // when the gesture starts, so toggling slip mode or pausing mid-drag needs
-    // no separate reset.
-    if (gestureActive && slipMode) {
+    // Slip mode keeps running through a manual gesture, but advancing while
+    // something else owns the scroll position would fight it, so hold the clock
+    // — and the pace with it — until the page settles. Derived here rather than
+    // latched when the gesture starts, so toggling slip mode or pausing mid-drag
+    // needs no separate reset.
+    if (slipMode && isPageMoving(now)) {
       previousTime = now;
       animationFrame = requestAnimationFrame(tick);
       return;
@@ -1143,7 +1154,12 @@
   document.addEventListener('pointerup', endMouseGesture, CAPTURE_PASSIVE);
   document.addEventListener('pointercancel', endMouseGesture, CAPTURE_PASSIVE);
   document.addEventListener('scroll', (event) => {
-    if (running && performance.now() - lastAutomaticScroll > 150) pauseForManualInput(event);
+    const now = performance.now();
+    // Momentum keeps firing scroll events every frame until it stops, so each
+    // one pushes the handover back. Only extend a window a gesture already
+    // opened, or the script's own writes would keep renewing it forever.
+    if (isPageMoving(now)) momentumSettlesAt = now + MOMENTUM_SETTLE_DELAY;
+    if (running && now - lastAutomaticScroll > 150) pauseForManualInput(event);
   }, CAPTURE_PASSIVE);
   document.addEventListener('keydown', (event) => {
     if (remappingAction) {
