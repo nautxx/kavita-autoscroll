@@ -20,6 +20,7 @@
 
   const VERSION = '1.3.0';
   const INSTALL_MARKER = 'data-scrollito';
+  const CALLOUT_MARKER = 'data-scrollito-no-callout';
   const STORAGE_KEY = 'scrollito.speed';
   const POSITION_STORAGE_KEY = 'scrollito.position';
   const AUTO_START_STORAGE_KEY = 'scrollito.auto-start';
@@ -89,6 +90,7 @@
   let fractionalDistance = 0;
   let lastAutomaticScroll = 0;
   let momentumSettlesAt = 0;
+  let calloutHeld = false;
   let cachedScrollContainer = null;
   let cachedInfiniteScroller = null;
   let scrollWriter = null;
@@ -355,6 +357,14 @@
     if (controlsAutoHidden === hidden) return;
     controlsAutoHidden = hidden;
     controls.dataset.autohidden = String(hidden);
+  }
+
+  // Holding a finger still is how you pause on a touchscreen, and iOS reads the
+  // same press on an image as "save this picture" and puts its own menu over the
+  // page. Suppress the callout only while the script owns the scroll, so a
+  // deliberate long press on a stopped page still saves the image.
+  function syncTouchCallout() {
+    document.documentElement.toggleAttribute(CALLOUT_MARKER, running || calloutHeld);
   }
 
   function revealControls() {
@@ -667,6 +677,7 @@
     updateToggleButtonLabel();
     toggleButton.setAttribute('aria-pressed', String(running));
     controls.dataset.running = String(running);
+    syncTouchCallout();
 
     cancelAnimationFrame(animationFrame);
     if (running) {
@@ -984,6 +995,19 @@
       @media (prefers-reduced-motion: reduce) {
         #${CONTROL_ID}, #${CONTROL_ID} button { transition: none; }
       }
+      /* The only rules that reach outside the control, and they only apply
+         while the marker is on <html>. -webkit-touch-callout inherits, so the
+         containers cover the pages without the script having to know Kavita's
+         image class; -webkit-user-drag does not, and is what lets a long press
+         lift an image out of the page on iPad, so it needs the images. */
+      [${CALLOUT_MARKER}] .reader,
+      [${CALLOUT_MARKER}] app-infinite-scroller {
+        -webkit-touch-callout: none;
+      }
+      [${CALLOUT_MARKER}] .reader img,
+      [${CALLOUT_MARKER}] app-infinite-scroller img {
+        -webkit-user-drag: none;
+      }
     `;
     document.head.append(style);
 
@@ -1116,15 +1140,28 @@
   }
 
   function beginGesture(event) {
-    if (!controls.contains(event.target)) gestureActive = true;
+    if (controls.contains(event.target)) return;
+    gestureActive = true;
+    // Latched rather than read live: pausing clears `running` in this same
+    // handler, and WebKit re-reads the style when the long press finally fires
+    // half a second later. Holding it for the whole gesture keeps the touch
+    // that pauses from also opening the menu.
+    calloutHeld = running;
+    syncTouchCallout();
+  }
+
+  function endGesture() {
+    gestureActive = false;
+    calloutHeld = false;
+    syncTouchCallout();
   }
 
   function endTouchGesture(event) {
-    if (event.touches.length === 0) gestureActive = false;
+    if (event.touches.length === 0) endGesture();
   }
 
   function endMouseGesture(event) {
-    if (event.pointerType === 'mouse') gestureActive = false;
+    if (event.pointerType === 'mouse') endGesture();
   }
 
   const CAPTURE_PASSIVE = { passive: true, capture: true };
@@ -1133,7 +1170,7 @@
     if (event.pointerType !== 'mouse') return;
     // A button released outside the window never delivers pointerup, so treat
     // any buttonless move as the end of a mouse-driven gesture.
-    if (gestureActive && event.buttons === 0) gestureActive = false;
+    if (gestureActive && event.buttons === 0) endGesture();
     revealControls();
   }, { passive: true });
   document.addEventListener('wheel', pauseForManualInput, CAPTURE_PASSIVE);
@@ -1142,8 +1179,9 @@
   // exactly the stretch slip mode has to cover. Mice keep the pointer stream,
   // so a drag on a scrollbar counts too.
   document.addEventListener('touchstart', (event) => {
-    pauseForManualInput(event);
+    // Before pauseForManualInput, which is what clears `running`.
     beginGesture(event);
+    pauseForManualInput(event);
   }, CAPTURE_PASSIVE);
   document.addEventListener('touchend', endTouchGesture, CAPTURE_PASSIVE);
   document.addEventListener('touchcancel', endTouchGesture, CAPTURE_PASSIVE);
