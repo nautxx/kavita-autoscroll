@@ -35,7 +35,7 @@
   const READER_MENU_TRACK_DURATION = 350;
   const SCROLL_CONTAINER_TTL = 250;
   const MOMENTUM_SETTLE_DELAY = 120;
-  const LONG_PRESS_DELAY = 400;
+  const LONG_PRESS_DELAY = 300;
   const READER_ROUTE = /\/manga(?:\/|$)/i;
   const CONTROL_ID = 'scrollito';
   const POSITIONS = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
