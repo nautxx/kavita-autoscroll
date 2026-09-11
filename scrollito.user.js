@@ -771,7 +771,12 @@
         position: fixed;
         right: max(16px, env(safe-area-inset-right));
         bottom: max(16px, env(safe-area-inset-bottom), var(--reader-menu-bottom-edge, 0px));
-        z-index: 2147483647;
+        /* One under Kavita's notifications, so they draw over the control and
+           stay readable in whichever corner it sits. ngx-toastr asks for 999999,
+           but Kavita loads Bootstrap afterwards and its .toast-container rule
+           wins at 1090. Every other Bootstrap layer — modals, popovers, tooltips
+           — still sits below this. */
+        z-index: 1089;
         display: flex;
         align-items: center;
         gap: 8px;

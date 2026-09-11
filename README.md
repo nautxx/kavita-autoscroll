@@ -27,6 +27,8 @@ Docker injector can place the same script into Kavita's HTML at the server.
   keyboard shortcut — stops scrolling when you want to scroll manually and
   leaves nothing over the page
 - Moves out of the way when Kavita's reader menu opens
+- Lets Kavita's notification popups draw over the control, so they stay
+  readable in whichever corner it sits
 - Pauses when you scroll, click, or touch outside the control
 - On iPhone and iPad, holding a finger down to pause keeps iOS's
   save-image menu and text magnifier out of the way, and leaves Kavita's
