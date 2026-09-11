@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Scrollito: auto-scroll for Kavita",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "description": "Adjustable auto-scrolling for the Kavita webtoon reader.",
   "homepage_url": "https://github.com/nautxx/scrollito",
   "content_scripts": [

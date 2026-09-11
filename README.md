@@ -98,8 +98,8 @@ Build it locally from the repository root:
 ```bash
 docker build \
   --file injector/Dockerfile \
-  --build-arg AUTOSCROLL_VERSION=1.3.2 \
-  --tag ghcr.io/nautxx/scrollito-injector:1.3.2 \
+  --build-arg AUTOSCROLL_VERSION=1.3.3 \
+  --tag ghcr.io/nautxx/scrollito-injector:1.3.3 \
   .
 ```
 
@@ -242,15 +242,15 @@ its settings area.
 Run:
 
 ```bash
-./scripts/package.sh 1.3.2
+./scripts/package.sh 1.3.3
 ```
 
 This creates a userscript, a WebExtension ZIP, and `SHA256SUMS.txt` under the
-versioned `build/release/v1.3.2/` directory. The injector image uses the
+versioned `build/release/v1.3.3/` directory. The injector image uses the
 userscript at the repository root as its source, so the browser and server
 packages stay on the same version.
 
-Pushing a matching tag such as `v1.3.2` runs the release workflow. It publishes
+Pushing a matching tag such as `v1.3.3` runs the release workflow. It publishes
 the assets as a GitHub release and builds `linux/amd64` and `linux/arm64`
 injector images in GitHub Container Registry.
 
