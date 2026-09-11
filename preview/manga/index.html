@@ -108,6 +108,32 @@
       background: rgba(255, 255, 255, .16);
     }
 
+    /* Stand-in for Kavita's notifications. ngx-toastr adds this container to
+       <body> with the first toast, in the bottom-right corner. Its theme asks
+       for fixed at 999999, but Kavita loads Bootstrap afterwards and Bootstrap's
+       own .toast-container wins, so a real reader computes these values. */
+    .toast-container {
+      position: absolute;
+      z-index: 1090;
+      pointer-events: none;
+    }
+
+    .toast-bottom-right {
+      right: .75rem;
+      bottom: .75rem;
+    }
+
+    .toast-container .ngx-toastr {
+      width: 18.75rem;
+      margin: 0 0 .375rem;
+      padding: .9375rem;
+      border-radius: .1875rem;
+      color: #fff;
+      background: #3a87ad;
+      font: 500 13px/1.4 -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      pointer-events: auto;
+    }
+
     .harness {
       position: fixed;
       top: 50%;
@@ -155,7 +181,8 @@
   <div class="harness">
     <button type="button" data-action="menu" aria-pressed="false">Reader menu (M)</button>
     <button type="button" data-action="settings" aria-pressed="false">Settings pane (X)</button>
-    <p>Scrollito should clear both, and lift again when the settings pane opens.</p>
+    <button type="button" data-action="toast">Kavita toast (T)</button>
+    <p>Scrollito should clear both, and lift again when the settings pane opens. Toasts should draw over it.</p>
   </div>
 
   <script src="/scrollito.user.js"></script>
@@ -163,8 +190,31 @@
     (() => {
       const reader = document.querySelector('.reader');
       const buttons = document.querySelectorAll('.harness button');
+      const toggles = document.querySelectorAll('.harness button[aria-pressed]');
       let menuOpen = false;
       let settingsOpen = false;
+      let toastCount = 0;
+
+      // Created on first use and then kept, the way ngx-toastr does, so
+      // Scrollito has to notice a container that turns up after it installed.
+      function showToast() {
+        let container = document.getElementById('toast-container');
+        if (!container) {
+          const overlay = document.createElement('div');
+          overlay.className = 'overlay-container';
+          container = document.createElement('div');
+          container.id = 'toast-container';
+          container.className = 'toast-bottom-right toast-container';
+          overlay.append(container);
+          document.body.append(overlay);
+        }
+        const toast = document.createElement('div');
+        toast.className = 'ngx-toastr toast-info';
+        toast.textContent = `Sample notification ${++toastCount}`;
+        container.append(toast);
+        // Kavita's timeOut.
+        setTimeout(() => toast.remove(), 6000);
+      }
 
       function renderMenu() {
         reader.querySelectorAll('.overlay').forEach((overlay) => overlay.remove());
@@ -195,7 +245,7 @@
 
       function sync() {
         renderMenu();
-        buttons.forEach((button) => {
+        toggles.forEach((button) => {
           const pressed = button.dataset.action === 'menu' ? menuOpen : settingsOpen;
           button.setAttribute('aria-pressed', String(pressed));
         });
@@ -216,7 +266,8 @@
 
       buttons.forEach((button) => {
         button.addEventListener('click', () => {
-          toggle(button.dataset.action);
+          if (button.dataset.action === 'toast') showToast();
+          else toggle(button.dataset.action);
           button.blur();
         });
       });
@@ -226,6 +277,7 @@
         const key = event.key.toLowerCase();
         if (key === 'm') toggle('menu');
         else if (key === 'x') toggle('settings');
+        else if (key === 't') showToast();
       });
 
       // Reload when either preview source changes, so editing the userscript or
